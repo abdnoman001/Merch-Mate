@@ -130,7 +130,7 @@ const InputScreen = ({ navigation }) => {
 
     return (
         <ScrollView style={styles.container}>
-            <Text style={styles.header}>MerchCost</Text>
+            <Text style={styles.header}>MerchMate</Text>
 
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Style Info</Text>
@@ -371,10 +371,6 @@ const InputScreen = ({ navigation }) => {
                 {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>CALCULATE FOB</Text>}
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.historyButton} onPress={() => navigation.navigate('History')}>
-                <Text style={styles.historyButtonText}>View History</Text>
-            </TouchableOpacity>
-
             <View style={{ height: 50 }} />
         </ScrollView>
     );
@@ -387,7 +383,7 @@ const styles = StyleSheet.create({
     sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10, color: '#444' },
     input: { borderWidth: 1, borderColor: '#ddd', padding: 10, borderRadius: 5, marginBottom: 10, backgroundColor: '#fafafa' },
     row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-    col: { flex: 1, marginHorizontal: 2 },
+    col: { flex: 1, marginHorizontal: 5 },
     garmentTypeContainer: { flexDirection: 'row', justifyContent: 'space-between' },
     typeButton: { flex: 1, padding: 12, marginHorizontal: 3, borderRadius: 8, borderWidth: 2, borderColor: '#007bff', backgroundColor: '#fff' },
     typeButtonActive: { backgroundColor: '#007bff' },
@@ -395,8 +391,6 @@ const styles = StyleSheet.create({
     typeButtonTextActive: { color: '#fff' },
     button: { backgroundColor: '#007bff', padding: 15, borderRadius: 10, alignItems: 'center', marginTop: 10 },
     buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-    historyButton: { backgroundColor: '#6c757d', padding: 12, borderRadius: 10, alignItems: 'center', marginTop: 10 },
-    historyButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });
 
 export default InputScreen;

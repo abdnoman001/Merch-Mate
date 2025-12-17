@@ -1,5 +1,6 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import LandingScreen from './src/screens/LandingScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
 import InputScreen from './src/screens/InputScreen';
 import ResultScreen from './src/screens/ResultScreen';
@@ -9,7 +10,12 @@ const Stack = createStackNavigator();
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Input">
+      <Stack.Navigator initialRouteName="Landing">
+        <Stack.Screen
+          name="Landing"
+          component={LandingScreen}
+          options={{ headerShown: false }}
+        />
         <Stack.Screen
           name="Input"
           component={InputScreen}

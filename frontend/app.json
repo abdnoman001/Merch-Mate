@@ -13,7 +13,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIViewControllerBasedStatusBarAppearance": true,
+        "UIStatusBarStyle": "UIStatusBarStyleDefault"
+      }
     },
     "android": {
       "package": "com.merchmate.app",
@@ -21,7 +25,13 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "statusBar": {
+        "hidden": false,
+        "style": "dark",
+        "backgroundColor": "#ffffff",
+        "translucent": false
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
