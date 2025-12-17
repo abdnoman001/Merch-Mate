@@ -1,0 +1,35 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#007bff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0056b3;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Rounded square background -->
+  <rect width="1024" height="1024" rx="180" fill="url(#grad1)"/>
+  
+  <!-- T-shirt icon (simplified) -->
+  <path d="M 350 300 L 420 250 L 450 280 Q 512 320, 574 280 L 604 250 L 674 300 L 674 450 L 620 450 L 620 700 L 404 700 L 404 450 L 350 450 Z" fill="white" opacity="0.9"/>
+  
+  <!-- Calculator overlay -->
+  <rect x="480" y="520" width="200" height="260" rx="15" fill="#ffffff" opacity="0.95"/>
+  <rect x="500" y="540" width="160" height="50" rx="8" fill="#007bff"/>
+  
+  <!-- Calculator buttons -->
+  <circle cx="530" cy="630" r="15" fill="#e0e0e0"/>
+  <circle cx="580" cy="630" r="15" fill="#e0e0e0"/>
+  <circle cx="630" cy="630" r="15" fill="#e0e0e0"/>
+  
+  <circle cx="530" cy="680" r="15" fill="#e0e0e0"/>
+  <circle cx="580" cy="680" r="15" fill="#e0e0e0"/>
+  <circle cx="630" cy="680" r="15" fill="#e0e0e0"/>
+  
+  <circle cx="530" cy="730" r="15" fill="#e0e0e0"/>
+  <circle cx="580" cy="730" r="15" fill="#e0e0e0"/>
+  <rect x="610" y="710" width="40" height="40" rx="8" fill="#28a745"/>
+  
+  <!-- Dollar sign -->
+  <text x="300" y="480" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="white" opacity="0.85">$</text>
+</svg>
