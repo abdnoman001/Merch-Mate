@@ -16,8 +16,10 @@
       "supportsTablet": true,
       "infoPlist": {
         "UIViewControllerBasedStatusBarAppearance": true,
-        "UIStatusBarStyle": "UIStatusBarStyleDefault"
-      }
+        "UIStatusBarStyle": "UIStatusBarStyleDefault",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.merchmate.app"
     },
     "android": {
       "package": "com.merchmate.app",
