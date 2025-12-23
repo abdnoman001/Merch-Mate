@@ -1,6 +1,6 @@
 # MerchMate - Professional Costing Calculator
 
-[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/abdnoman001/Merch-Mate)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/abdnoman001/Merch-Mate)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **MerchMate** is a professional FOB (Free on Board) costing calculator designed for the garment manufacturing industry. Calculate accurate costs for T-Shirts, Shirts, Jeans, and more with detailed breakdowns of fabric consumption, manufacturing costs, and profit margins.
@@ -259,7 +259,27 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📝 Version History
 
-### **v1.0.1** (Current)
+### **v1.1.0** (Current) - Export Features Update
+- ✅ **Excel Export** - Professional formatted .xlsx files with:
+  - Color-coded headers (blue brand header, dark gray sections)
+  - Properly formatted currency ($0.00)
+  - Highlighted totals with yellow background
+  - Organized sections (Style Info, Cost Breakdown, Totals, Consumption)
+  - Left-aligned text fields, right-aligned numbers
+- ✅ **PDF Export** - Professional receipt-style PDF documents with:
+  - Clean layout with MerchMate branding
+  - Complete cost breakdown in table format
+  - Style, Buyer, and Garment information
+  - Date stamp and consumption details
+- ✅ **Share/Download Options** - Three export methods:
+  - Share Excel (formatted spreadsheet)
+  - Share/Download PDF (professional receipt)
+  - Share Quote (text format for messaging apps)
+- ✅ **Buyer Information** - Added to all export formats
+- ✅ **Improved Input Alignment** - Better label styling in Other Costs section
+- 📦 **Dependencies Added**: expo-print, expo-sharing, xlsx
+
+### **v1.0.1**
 - ✅ Added landing page with logo and navigation
 - ✅ Universal share functionality (replaced WhatsApp-only)
 - ✅ Improved input field alignment
