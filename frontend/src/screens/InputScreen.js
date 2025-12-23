@@ -213,15 +213,15 @@ const InputScreen = ({ navigation }) => {
                     <Text style={styles.sectionTitle}>Knit Fabric Costs (USD/kg)</Text>
                     <View style={styles.row}>
                         <View style={styles.col}>
-                            <Text>Yarn $/kg</Text>
+                            <Text>Yarn ($/kg)</Text>
                             <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.yarn_price_per_kg)} onChangeText={t => handleNumericChange('yarn_price_per_kg', t)} />
                         </View>
                         <View style={styles.col}>
-                            <Text>Knit $/kg</Text>
+                            <Text>Knit ($/kg)</Text>
                             <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.knitting_charge_per_kg)} onChangeText={t => handleNumericChange('knitting_charge_per_kg', t)} />
                         </View>
                         <View style={styles.col}>
-                            <Text>Dye $/kg</Text>
+                            <Text>Dye ($/kg)</Text>
                             <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.dyeing_charge_per_kg)} onChangeText={t => handleNumericChange('dyeing_charge_per_kg', t)} />
                         </View>
                     </View>
@@ -337,15 +337,15 @@ const InputScreen = ({ navigation }) => {
                 <Text style={styles.sectionTitle}>Other Costs (per Piece)</Text>
                 <View style={styles.row}>
                     <View style={styles.col}>
-                        <Text>AOP/Print ($/pc)</Text>
+                        <Text style={styles.label}>AOP/Print            ($/pc)</Text>
                         <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.aop_print_cost_per_pc)} onChangeText={t => handleNumericChange('aop_print_cost_per_pc', t)} />
                     </View>
                     <View style={styles.col}>
-                        <Text>Accessories ($/pc)</Text>
+                        <Text style={styles.label}>Accessories          ($/pc)</Text>
                         <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.accessories_cost_per_pc)} onChangeText={t => handleNumericChange('accessories_cost_per_pc', t)} />
                     </View>
                     <View style={styles.col}>
-                        <Text>CM Cost ($/pc)</Text>
+                        <Text style={styles.label}>CM Cost            ($/pc)</Text>
                         <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.cm_cost_per_pc)} onChangeText={t => handleNumericChange('cm_cost_per_pc', t)} />
                     </View>
                 </View>
@@ -353,15 +353,15 @@ const InputScreen = ({ navigation }) => {
                 <Text style={styles.sectionTitle}>FOB-Essential Costs (per Piece)</Text>
                 <View style={styles.row}>
                     <View style={styles.col}>
-                        <Text>Washing ($/pc)</Text>
+                        <Text style={styles.label}>Washing            ($/pc)</Text>
                         <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.washing_cost_per_pc)} onChangeText={t => handleNumericChange('washing_cost_per_pc', t)} />
                     </View>
                     <View style={styles.col}>
-                        <Text>Commercial ($/pc)</Text>
+                        <Text style={styles.label}>Commercial     ($/pc)</Text>
                         <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.commercial_cost_per_pc)} onChangeText={t => handleNumericChange('commercial_cost_per_pc', t)} />
                     </View>
                     <View style={styles.col}>
-                        <Text>Testing ($/pc)</Text>
+                        <Text style={styles.label}>Testing            ($/pc)</Text>
                         <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.testing_cost_per_pc)} onChangeText={t => handleNumericChange('testing_cost_per_pc', t)} />
                     </View>
                 </View>
@@ -381,6 +381,7 @@ const styles = StyleSheet.create({
     header: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center', color: '#333' },
     section: { backgroundColor: '#fff', padding: 15, borderRadius: 10, marginBottom: 15, elevation: 2 },
     sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10, color: '#444' },
+    label: { fontSize: 13, color: '#555', marginBottom: 5 },
     input: { borderWidth: 1, borderColor: '#ddd', padding: 10, borderRadius: 5, marginBottom: 10, backgroundColor: '#fafafa' },
     row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
     col: { flex: 1, marginHorizontal: 5 },

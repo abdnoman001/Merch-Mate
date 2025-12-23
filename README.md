@@ -118,6 +118,7 @@ adb install path/to/merchmate.apk
 - See detailed cost breakdown
 - View fabric consumption details
 - Share the quote via any app
+- Export FOB: Share Excel and professional PDF receipt
 
 #### **4. History Screen**
 - View all saved calculations
@@ -161,6 +162,10 @@ cd Merch-Mate
 cd frontend
 npm install
 
+# Install modules for Excel/PDF export
+npx expo install expo-print expo-sharing
+npm install xlsx
+
 # Start development server
 npx expo start
 ```
@@ -182,6 +187,23 @@ eas build --platform ios --profile preview
 # Build for both platforms
 eas build --platform all --profile preview
 ```
+
+---
+
+## 🧾 FOB Export (Excel/PDF)
+
+- Result screen includes three actions:
+  - Share Excel: Generates an .xlsx file listing components and prices.
+  - Share/Download PDF: Creates a professional receipt-style .pdf with totals.
+  - Share Quote: Shares a formatted text summary.
+
+### Where files are saved
+- Files are saved to the app documents directory and shared via the system share sheet.
+- On Android/iOS, you can choose apps like Drive, Files, Mail, or WhatsApp to send or save.
+
+### Troubleshooting
+- If sharing isn’t available, ensure expo-sharing is installed and your device supports sharing.
+- PDF generation relies on expo-print; install it using the command above.
 
 ---
 
