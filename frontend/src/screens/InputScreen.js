@@ -65,7 +65,7 @@ const InputScreen = ({ navigation, route }) => {
 
             perDozenFields.forEach(field => {
                 if (displayData[field] !== undefined) {
-                    displayData[field] = displayData[field] * 12;
+                    displayData[field] = parseFloat((displayData[field] * 12).toFixed(2));
                 }
             });
 
