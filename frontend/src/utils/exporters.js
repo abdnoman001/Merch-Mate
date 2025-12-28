@@ -10,21 +10,37 @@ const toNumber = (v) => {
 
 export const buildFOBData = (inputs, breakdown, finalFob, profitMargin) => {
     const isKnit = breakdown.garment_type === 'T-Shirt (Knit)';
+    const finalFobPerDoz = finalFob;
+    const finalFobPerPc = finalFob / 12;
+    const totalCostPerDoz = breakdown.total_cost_per_doz || (breakdown.total_cost_per_pc * 12);
+    const totalCostPerPc = breakdown.total_cost_per_pc;
+    const fabricCostPerDoz = breakdown.fabric_cost_per_doz || (breakdown.fabric_cost_per_pc * 12);
+    const fabricCostPerPc = breakdown.fabric_cost_per_pc;
+
     return {
         style: inputs.style_name || 'N/A',
         buyer: inputs.buyer_name || 'N/A',
         garmentType: breakdown.garment_type || 'N/A',
         profitMargin: toNumber(profitMargin),
-        finalFob: Number(toNumber(finalFob).toFixed(2)),
-        totalCost: Number(toNumber(breakdown.total_cost_per_pc).toFixed(2)),
+        finalFobPerDoz: Number(toNumber(finalFobPerDoz).toFixed(2)),
+        finalFobPerPc: Number(toNumber(finalFobPerPc).toFixed(2)),
+        totalCostPerDoz: Number(toNumber(totalCostPerDoz).toFixed(2)),
+        totalCostPerPc: Number(toNumber(totalCostPerPc).toFixed(2)),
         costs: {
-            fabric: Number(toNumber(breakdown.fabric_cost_per_pc).toFixed(2)),
-            print: Number(toNumber(inputs.aop_print_cost_per_pc).toFixed(2)),
-            accessories: Number(toNumber(inputs.accessories_cost_per_pc).toFixed(2)),
-            cm: Number(toNumber(inputs.cm_cost_per_pc).toFixed(2)),
-            washing: Number(toNumber(inputs.washing_cost_per_pc).toFixed(2)),
-            commercial: Number(toNumber(inputs.commercial_cost_per_pc).toFixed(2)),
-            testing: Number(toNumber(inputs.testing_cost_per_pc).toFixed(2)),
+            fabricPerDoz: Number(toNumber(fabricCostPerDoz).toFixed(2)),
+            fabricPerPc: Number(toNumber(fabricCostPerPc).toFixed(2)),
+            printPerDoz: Number(toNumber(inputs.aop_print_cost_per_pc * 12).toFixed(2)),
+            printPerPc: Number(toNumber(inputs.aop_print_cost_per_pc).toFixed(2)),
+            accessoriesPerDoz: Number(toNumber(inputs.accessories_cost_per_pc * 12).toFixed(2)),
+            accessoriesPerPc: Number(toNumber(inputs.accessories_cost_per_pc).toFixed(2)),
+            cmPerDoz: Number(toNumber(inputs.cm_cost_per_pc * 12).toFixed(2)),
+            cmPerPc: Number(toNumber(inputs.cm_cost_per_pc).toFixed(2)),
+            washingPerDoz: Number(toNumber(inputs.washing_cost_per_pc * 12).toFixed(2)),
+            washingPerPc: Number(toNumber(inputs.washing_cost_per_pc).toFixed(2)),
+            commercialPerDoz: Number(toNumber(inputs.commercial_cost_per_pc * 12).toFixed(2)),
+            commercialPerPc: Number(toNumber(inputs.commercial_cost_per_pc).toFixed(2)),
+            testingPerDoz: Number(toNumber(inputs.testing_cost_per_pc * 12).toFixed(2)),
+            testingPerPc: Number(toNumber(inputs.testing_cost_per_pc).toFixed(2)),
         },
         consumption: isKnit
             ? {
@@ -50,32 +66,32 @@ const timestamp = () => {
 
 export const generateExcelFOB = async (data) => {
     const wsData = [
-        ['MerchMate FOB Costing', '', ''],
-        ['Generated:', new Date().toLocaleString(), ''],
+        ['MerchMate FOB Costing', '', '', ''],
+        ['Generated:', new Date().toLocaleString(), '', ''],
         [],
-        ['STYLE INFORMATION', '', ''],
-        ['Style:', data.style, ''],
-        ['Buyer:', data.buyer, ''],
-        ['Garment Type:', data.garmentType, ''],
+        ['STYLE INFORMATION', '', '', ''],
+        ['Style:', data.style, '', ''],
+        ['Buyer:', data.buyer, '', ''],
+        ['Garment Type:', data.garmentType, '', ''],
         [],
-        ['COST BREAKDOWN (PER PIECE)', '', ''],
-        ['Component', 'Amount', 'Currency'],
-        ['Fabric', data.costs.fabric, 'USD'],
-        ['AOP/Print', data.costs.print, 'USD'],
-        ['Accessories', data.costs.accessories, 'USD'],
-        ['CM Cost', data.costs.cm, 'USD'],
-        ['Washing', data.costs.washing, 'USD'],
-        ['Commercial', data.costs.commercial, 'USD'],
-        ['Testing', data.costs.testing, 'USD'],
+        ['COST BREAKDOWN', '', '', ''],
+        ['Component', 'Per Piece (USD)', 'Per Dozen (USD)', ''],
+        ['Fabric', data.costs.fabricPerPc, data.costs.fabricPerDoz, ''],
+        ['AOP/Print', data.costs.printPerPc, data.costs.printPerDoz, ''],
+        ['Accessories', data.costs.accessoriesPerPc, data.costs.accessoriesPerDoz, ''],
+        ['CM Cost', data.costs.cmPerPc, data.costs.cmPerDoz, ''],
+        ['Washing', data.costs.washingPerPc, data.costs.washingPerDoz, ''],
+        ['Commercial', data.costs.commercialPerPc, data.costs.commercialPerDoz, ''],
+        ['Testing', data.costs.testingPerPc, data.costs.testingPerDoz, ''],
         [],
-        ['TOTALS', '', ''],
-        ['Total Cost', data.totalCost, 'USD'],
-        ['Profit Margin', data.profitMargin + '%', ''],
-        ['Final FOB (per piece)', data.finalFob, 'USD'],
+        ['TOTALS', '', '', ''],
+        ['Total Cost', data.totalCostPerPc, data.totalCostPerDoz, 'USD'],
+        ['Profit Margin', data.profitMargin + '%', '', ''],
+        ['Final FOB', data.finalFobPerPc, data.finalFobPerDoz, 'USD'],
         [],
-        ['CONSUMPTION DETAILS', '', ''],
-        [data.consumption.basicLabel, data.consumption.basic, ''],
-        [data.consumption.totalLabel, data.consumption.total, ''],
+        ['CONSUMPTION DETAILS', '', '', ''],
+        [data.consumption.basicLabel, data.consumption.basic, '', ''],
+        [data.consumption.totalLabel, data.consumption.total, '', ''],
     ];
 
     const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -83,8 +99,9 @@ export const generateExcelFOB = async (data) => {
     // Set column widths
     ws['!cols'] = [
         { wch: 30 },  // Column A - wider for labels
-        { wch: 15 },  // Column B - amounts
-        { wch: 10 },  // Column C - currency
+        { wch: 18 },  // Column B - per piece
+        { wch: 18 },  // Column C - per dozen
+        { wch: 10 },  // Column D - currency
     ];
 
     // Apply styles to cells
@@ -140,8 +157,8 @@ export const generateExcelFOB = async (data) => {
                         bottom: { style: 'thin', color: { rgb: 'CCCCCC' } },
                     },
                 };
-                // Format numbers in column B
-                if (C === 1 && typeof ws[cellAddress].v === 'number') {
+                // Format numbers in columns B and C
+                if ((C === 1 || C === 2) && typeof ws[cellAddress].v === 'number') {
                     ws[cellAddress].z = '$0.00';
                 }
             }
@@ -156,8 +173,8 @@ export const generateExcelFOB = async (data) => {
                         bottom: { style: R === 21 ? 'double' : 'thin', color: { rgb: '000000' } },
                     },
                 };
-                // Format numbers
-                if (C === 1 && typeof ws[cellAddress].v === 'number') {
+                // Format numbers in columns B and C
+                if ((C === 1 || C === 2) && typeof ws[cellAddress].v === 'number') {
                     ws[cellAddress].z = '$0.00';
                 }
             }
@@ -180,7 +197,7 @@ export const generateExcelFOB = async (data) => {
 
     // Merge cells for title
     if (!ws['!merges']) ws['!merges'] = [];
-    ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } });
+    ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } });
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'FOB Costing');
@@ -228,22 +245,22 @@ export const generatePdfFOB = async (data) => {
       </div>
       <table>
         <thead>
-          <tr><th>Component</th><th>Price (USD)</th></tr>
+          <tr><th>Component</th><th>Per Piece (USD)</th><th>Per Dozen (USD)</th></tr>
         </thead>
         <tbody>
-          <tr><td>Fabric</td><td>${currency(data.costs.fabric)}</td></tr>
-          <tr><td>AOP/Print</td><td>${currency(data.costs.print)}</td></tr>
-          <tr><td>Accessories</td><td>${currency(data.costs.accessories)}</td></tr>
-          <tr><td>CM Cost</td><td>${currency(data.costs.cm)}</td></tr>
-          <tr><td>Washing</td><td>${currency(data.costs.washing)}</td></tr>
-          <tr><td>Commercial</td><td>${currency(data.costs.commercial)}</td></tr>
-          <tr><td>Testing</td><td>${currency(data.costs.testing)}</td></tr>
+          <tr><td>Fabric</td><td>${currency(data.costs.fabricPerPc)}</td><td>${currency(data.costs.fabricPerDoz)}</td></tr>
+          <tr><td>AOP/Print</td><td>${currency(data.costs.printPerPc)}</td><td>${currency(data.costs.printPerDoz)}</td></tr>
+          <tr><td>Accessories</td><td>${currency(data.costs.accessoriesPerPc)}</td><td>${currency(data.costs.accessoriesPerDoz)}</td></tr>
+          <tr><td>CM Cost</td><td>${currency(data.costs.cmPerPc)}</td><td>${currency(data.costs.cmPerDoz)}</td></tr>
+          <tr><td>Washing</td><td>${currency(data.costs.washingPerPc)}</td><td>${currency(data.costs.washingPerDoz)}</td></tr>
+          <tr><td>Commercial</td><td>${currency(data.costs.commercialPerPc)}</td><td>${currency(data.costs.commercialPerDoz)}</td></tr>
+          <tr><td>Testing</td><td>${currency(data.costs.testingPerPc)}</td><td>${currency(data.costs.testingPerDoz)}</td></tr>
         </tbody>
       </table>
       <div class="totals">
-        <div><strong>Total Cost</strong><span>${currency(data.totalCost)}</span></div>
+        <div><strong>Total Cost</strong><span>${currency(data.totalCostPerPc)} / pc | ${currency(data.totalCostPerDoz)} / dz</span></div>
         <div><strong>Profit Margin</strong><span>${Number(data.profitMargin).toFixed(2)}%</span></div>
-        <div><strong>Final FOB (USD/pc)</strong><span>${currency(data.finalFob)}</span></div>
+        <div><strong>Final FOB</strong><span>${currency(data.finalFobPerPc)} / pc | ${currency(data.finalFobPerDoz)} / dz</span></div>
       </div>
       <div class="meta" style="margin-top: 14px">
         <div><strong>${data.consumption.basicLabel}:</strong> ${data.consumption.basic}</div>

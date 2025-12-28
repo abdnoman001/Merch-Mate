@@ -62,27 +62,32 @@ const calculateTshirtFOB = (inputs) => {
     );
     const fabric_cost_per_doz = fabric_rate_per_kg * total_fabric_req;
 
-    // Step D: Total Cost per Piece (all costs already in per-piece)
+    // Step D: Total Cost per Dozen (convert per-piece costs to per-dozen)
     const fabric_cost_per_pc = fabric_cost_per_doz / 12;
-    const total_cost_per_pc = (
-        fabric_cost_per_pc +
-        aop_print_cost_per_pc +
-        accessories_cost_per_pc +
-        cm_cost_per_pc +
-        washing_cost_per_pc +
-        commercial_cost_per_pc +
-        testing_cost_per_pc
+    const total_cost_per_doz = (
+        fabric_cost_per_doz +
+        (aop_print_cost_per_pc * 12) +
+        (accessories_cost_per_pc * 12) +
+        (cm_cost_per_pc * 12) +
+        (washing_cost_per_pc * 12) +
+        (commercial_cost_per_pc * 12) +
+        (testing_cost_per_pc * 12)
     );
+    const total_cost_per_pc = total_cost_per_doz / 12;
 
-    // Step E: Final FOB per Pc (add profit margin)
-    const final_fob_per_pc = total_cost_per_pc * (1 + (profit_margin_percent / 100.0));
+    // Step E: Final FOB per Dozen (add profit margin)
+    const final_fob_per_doz = total_cost_per_doz * (1 + (profit_margin_percent / 100.0));
+    const final_fob_per_pc = final_fob_per_doz / 12;
 
     return {
         garment_type: 'T-Shirt (Knit)',
         basic_consumption_kg_doz: parseFloat(basic_consumption.toFixed(4)),
         total_fabric_req_kg_doz: parseFloat(total_fabric_req.toFixed(4)),
+        fabric_cost_per_doz: parseFloat(fabric_cost_per_doz.toFixed(2)),
         fabric_cost_per_pc: parseFloat(fabric_cost_per_pc.toFixed(2)),
+        total_cost_per_doz: parseFloat(total_cost_per_doz.toFixed(2)),
         total_cost_per_pc: parseFloat(total_cost_per_pc.toFixed(2)),
+        final_fob_per_doz: parseFloat(final_fob_per_doz.toFixed(2)),
         final_fob_per_pc: parseFloat(final_fob_per_pc.toFixed(2))
     };
 };
@@ -129,29 +134,35 @@ const calculateShirtFOB = (inputs) => {
     // Calculate for dozen
     const yards_per_doz = yards_with_wastage * 12;
 
-    // Fabric cost per piece
+    // Fabric cost per dozen
+    const fabric_cost_per_doz = yards_per_doz * fabric_price_per_yard;
     const fabric_cost_per_pc = yards_with_wastage * fabric_price_per_yard;
 
-    // Total cost per piece (all costs already in per-piece)
-    const total_cost_per_pc = (
-        fabric_cost_per_pc +
-        aop_print_cost_per_pc +
-        accessories_cost_per_pc +
-        cm_cost_per_pc +
-        washing_cost_per_pc +
-        commercial_cost_per_pc +
-        testing_cost_per_pc
+    // Total cost per dozen (convert per-piece costs to per-dozen)
+    const total_cost_per_doz = (
+        fabric_cost_per_doz +
+        (aop_print_cost_per_pc * 12) +
+        (accessories_cost_per_pc * 12) +
+        (cm_cost_per_pc * 12) +
+        (washing_cost_per_pc * 12) +
+        (commercial_cost_per_pc * 12) +
+        (testing_cost_per_pc * 12)
     );
+    const total_cost_per_pc = total_cost_per_doz / 12;
 
-    // Final FOB (add profit margin)
-    const final_fob_per_pc = total_cost_per_pc * (1 + (profit_margin_percent / 100.0));
+    // Final FOB per Dozen (add profit margin)
+    const final_fob_per_doz = total_cost_per_doz * (1 + (profit_margin_percent / 100.0));
+    const final_fob_per_pc = final_fob_per_doz / 12;
 
     return {
         garment_type: 'Woven Shirt',
         basic_consumption_yards_piece: parseFloat(yards_per_piece.toFixed(3)),
         total_fabric_req_yards_doz: parseFloat(yards_per_doz.toFixed(2)),
+        fabric_cost_per_doz: parseFloat(fabric_cost_per_doz.toFixed(2)),
         fabric_cost_per_pc: parseFloat(fabric_cost_per_pc.toFixed(2)),
+        total_cost_per_doz: parseFloat(total_cost_per_doz.toFixed(2)),
         total_cost_per_pc: parseFloat(total_cost_per_pc.toFixed(2)),
+        final_fob_per_doz: parseFloat(final_fob_per_doz.toFixed(2)),
         final_fob_per_pc: parseFloat(final_fob_per_pc.toFixed(2))
     };
 };
@@ -198,29 +209,35 @@ const calculateJeansFOB = (inputs) => {
     // Calculate for dozen
     const yards_per_doz = yards_with_wastage * 12;
 
-    // Fabric cost per piece
+    // Fabric cost per dozen
+    const fabric_cost_per_doz = yards_per_doz * fabric_price_per_yard;
     const fabric_cost_per_pc = yards_with_wastage * fabric_price_per_yard;
 
-    // Total cost per piece (all costs already in per-piece)
-    const total_cost_per_pc = (
-        fabric_cost_per_pc +
-        aop_print_cost_per_pc +
-        accessories_cost_per_pc +
-        cm_cost_per_pc +
-        washing_cost_per_pc +
-        commercial_cost_per_pc +
-        testing_cost_per_pc
+    // Total cost per dozen (convert per-piece costs to per-dozen)
+    const total_cost_per_doz = (
+        fabric_cost_per_doz +
+        (aop_print_cost_per_pc * 12) +
+        (accessories_cost_per_pc * 12) +
+        (cm_cost_per_pc * 12) +
+        (washing_cost_per_pc * 12) +
+        (commercial_cost_per_pc * 12) +
+        (testing_cost_per_pc * 12)
     );
+    const total_cost_per_pc = total_cost_per_doz / 12;
 
-    // Final FOB (add profit margin)
-    const final_fob_per_pc = total_cost_per_pc * (1 + (profit_margin_percent / 100.0));
+    // Final FOB per Dozen (add profit margin)
+    const final_fob_per_doz = total_cost_per_doz * (1 + (profit_margin_percent / 100.0));
+    const final_fob_per_pc = final_fob_per_doz / 12;
 
     return {
         garment_type: 'Denim Jeans',
         basic_consumption_yards_piece: parseFloat(yards_per_piece.toFixed(3)),
         total_fabric_req_yards_doz: parseFloat(yards_per_doz.toFixed(2)),
+        fabric_cost_per_doz: parseFloat(fabric_cost_per_doz.toFixed(2)),
         fabric_cost_per_pc: parseFloat(fabric_cost_per_pc.toFixed(2)),
+        total_cost_per_doz: parseFloat(total_cost_per_doz.toFixed(2)),
         total_cost_per_pc: parseFloat(total_cost_per_pc.toFixed(2)),
+        final_fob_per_doz: parseFloat(final_fob_per_doz.toFixed(2)),
         final_fob_per_pc: parseFloat(final_fob_per_pc.toFixed(2))
     };
 };
@@ -267,5 +284,88 @@ export const getCostSheetHistory = async () => {
     } catch (error) {
         console.error('Error loading history:', error);
         return [];
+    }
+};
+
+/**
+ * Delete a single cost sheet by ID
+ */
+export const deleteCostSheet = async (id) => {
+    try {
+        const historyJson = await AsyncStorage.getItem('cost_sheets_history');
+        const history = historyJson ? JSON.parse(historyJson) : [];
+
+        const updatedHistory = history.filter(item => item.id !== id);
+
+        await AsyncStorage.setItem('cost_sheets_history', JSON.stringify(updatedHistory));
+        return true;
+    } catch (error) {
+        console.error('Error deleting cost sheet:', error);
+        return false;
+    }
+};
+
+/**
+ * Delete multiple cost sheets by IDs
+ */
+export const deleteMultipleCostSheets = async (ids) => {
+    try {
+        const historyJson = await AsyncStorage.getItem('cost_sheets_history');
+        const history = historyJson ? JSON.parse(historyJson) : [];
+
+        const updatedHistory = history.filter(item => !ids.includes(item.id));
+
+        await AsyncStorage.setItem('cost_sheets_history', JSON.stringify(updatedHistory));
+        return true;
+    } catch (error) {
+        console.error('Error deleting cost sheets:', error);
+        return false;
+    }
+};
+
+/**
+ * Clear all cost sheet history
+ */
+export const clearAllHistory = async () => {
+    try {
+        await AsyncStorage.setItem('cost_sheets_history', JSON.stringify([]));
+        return true;
+    } catch (error) {
+        console.error('Error clearing history:', error);
+        return false;
+    }
+};
+
+/**
+ * Update FOB for a specific cost sheet
+ */
+export const updateCostSheetFOB = async (id, newFobPerDoz, newProfitMargin) => {
+    try {
+        const historyJson = await AsyncStorage.getItem('cost_sheets_history');
+        const history = historyJson ? JSON.parse(historyJson) : [];
+
+        const updatedHistory = history.map(item => {
+            if (item.id === id) {
+                return {
+                    ...item,
+                    breakdown: {
+                        ...item.breakdown,
+                        final_fob_per_doz: newFobPerDoz,
+                        final_fob_per_pc: newFobPerDoz / 12
+                    },
+                    inputs: {
+                        ...item.inputs,
+                        profit_margin_percent: newProfitMargin
+                    }
+                };
+            }
+            return item;
+        });
+
+        await AsyncStorage.setItem('cost_sheets_history', JSON.stringify(updatedHistory));
+        return true;
+    } catch (error) {
+        console.error('Error updating FOB:', error);
+        return false;
     }
 };

@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { calculateFOB, saveCostSheet } from '../utils/calculations';
 
-const InputScreen = ({ navigation }) => {
+const InputScreen = ({ navigation, route }) => {
+    const editData = route?.params?.editData;
     const [loading, setLoading] = useState(false);
-    const [garmentType, setGarmentType] = useState('tshirt'); // tshirt, shirt, jeans
-    const [formData, setFormData] = useState({
+    const [garmentType, setGarmentType] = useState(editData?.inputs?.garment_type || 'tshirt'); // tshirt, shirt, jeans
+    const [formData, setFormData] = useState(editData?.inputs || {
         style_name: 'Style-001',
         buyer_name: 'Buyer-A',
         season: 'Summer 24',
@@ -40,19 +41,38 @@ const InputScreen = ({ navigation }) => {
         jeans_wastage_percent: 5,
         jeans_fabric_allowance: 2, // inches for denim
 
-        // Common costs
+        // Common costs (now per dozen in UI)
         yarn_price_per_kg: 4.5,
         knitting_charge_per_kg: 0.5,
         dyeing_charge_per_kg: 1.2,
         fabric_price_per_yard: 3.5, // For woven fabrics
-        aop_print_cost_per_pc: 0,
-        accessories_cost_per_pc: 0.17,
-        cm_cost_per_pc: 1.0,
-        washing_cost_per_pc: 0.5,
-        commercial_cost_per_pc: 0.8,
-        testing_cost_per_pc: 0.3,
+        aop_print_cost_per_pc: 0, // Displayed as per dozen in UI (0 * 12 = 0)
+        accessories_cost_per_pc: 2.04, // Displayed as per dozen in UI (0.17 * 12)
+        cm_cost_per_pc: 12.0, // Displayed as per dozen in UI (1.0 * 12)
+        washing_cost_per_pc: 6.0, // Displayed as per dozen in UI (0.5 * 12)
+        commercial_cost_per_pc: 9.6, // Displayed as per dozen in UI (0.8 * 12)
+        testing_cost_per_pc: 3.6, // Displayed as per dozen in UI (0.3 * 12)
         profit_margin_percent: 15.0,
     });
+
+    // Update form when edit data is passed
+    useEffect(() => {
+        if (editData?.inputs) {
+            // Convert per piece values to per dozen for display
+            const displayData = { ...editData.inputs };
+            const perDozenFields = ['aop_print_cost_per_pc', 'accessories_cost_per_pc', 'cm_cost_per_pc',
+                'washing_cost_per_pc', 'commercial_cost_per_pc', 'testing_cost_per_pc'];
+
+            perDozenFields.forEach(field => {
+                if (displayData[field] !== undefined) {
+                    displayData[field] = displayData[field] * 12;
+                }
+            });
+
+            setFormData(displayData);
+            setGarmentType(editData.inputs.garment_type);
+        }
+    }, [editData]);
 
     const handleGarmentTypeChange = (type) => {
         setGarmentType(type);
@@ -94,6 +114,9 @@ const InputScreen = ({ navigation }) => {
 
         // Convert string values to numbers and validate
         const cleanedData = { ...formData };
+        const perDozenFields = ['aop_print_cost_per_pc', 'accessories_cost_per_pc', 'cm_cost_per_pc',
+            'washing_cost_per_pc', 'commercial_cost_per_pc', 'testing_cost_per_pc'];
+
         for (const field of numericFields) {
             const value = formData[field];
             if (value === '' || value === '-' || value === '.') {
@@ -105,7 +128,12 @@ const InputScreen = ({ navigation }) => {
                 Alert.alert("Invalid Input", `Please enter a valid number for all fields.`);
                 return;
             }
-            cleanedData[field] = numValue;
+            // Convert per dozen fields to per piece for calculations
+            if (perDozenFields.includes(field)) {
+                cleanedData[field] = numValue / 12;
+            } else {
+                cleanedData[field] = numValue;
+            }
         }
 
         setLoading(true);
@@ -337,15 +365,15 @@ const InputScreen = ({ navigation }) => {
                 <Text style={styles.sectionTitle}>Other Costs (per Piece)</Text>
                 <View style={styles.row}>
                     <View style={styles.col}>
-                        <Text style={styles.label}>AOP/Print            ($/pc)</Text>
+                        <Text style={styles.label}>AOP/Print            ($/dz)</Text>
                         <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.aop_print_cost_per_pc)} onChangeText={t => handleNumericChange('aop_print_cost_per_pc', t)} />
                     </View>
                     <View style={styles.col}>
-                        <Text style={styles.label}>Accessories          ($/pc)</Text>
+                        <Text style={styles.label}>Accessories          ($/dz)</Text>
                         <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.accessories_cost_per_pc)} onChangeText={t => handleNumericChange('accessories_cost_per_pc', t)} />
                     </View>
                     <View style={styles.col}>
-                        <Text style={styles.label}>CM Cost            ($/pc)</Text>
+                        <Text style={styles.label}>CM Cost            ($/dz)</Text>
                         <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.cm_cost_per_pc)} onChangeText={t => handleNumericChange('cm_cost_per_pc', t)} />
                     </View>
                 </View>
@@ -353,15 +381,15 @@ const InputScreen = ({ navigation }) => {
                 <Text style={styles.sectionTitle}>FOB-Essential Costs (per Piece)</Text>
                 <View style={styles.row}>
                     <View style={styles.col}>
-                        <Text style={styles.label}>Washing            ($/pc)</Text>
+                        <Text style={styles.label}>Washing            ($/dz)</Text>
                         <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.washing_cost_per_pc)} onChangeText={t => handleNumericChange('washing_cost_per_pc', t)} />
                     </View>
                     <View style={styles.col}>
-                        <Text style={styles.label}>Commercial     ($/pc)</Text>
+                        <Text style={styles.label}>Commercial     ($/dz)</Text>
                         <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.commercial_cost_per_pc)} onChangeText={t => handleNumericChange('commercial_cost_per_pc', t)} />
                     </View>
                     <View style={styles.col}>
-                        <Text style={styles.label}>Testing            ($/pc)</Text>
+                        <Text style={styles.label}>Testing            ($/dz)</Text>
                         <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.testing_cost_per_pc)} onChangeText={t => handleNumericChange('testing_cost_per_pc', t)} />
                     </View>
                 </View>

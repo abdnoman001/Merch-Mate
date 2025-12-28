@@ -259,7 +259,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📝 Version History
 
-### **v1.1.0** (Current) - Export Features Update
+### **v1.0.2** (Current) - Export Features Update
 - ✅ **Excel Export** - Professional formatted .xlsx files with:
   - Color-coded headers (blue brand header, dark gray sections)
   - Properly formatted currency ($0.00)
