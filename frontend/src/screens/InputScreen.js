@@ -156,270 +156,522 @@ const InputScreen = ({ navigation, route }) => {
         }
     };
 
-    return (
-        <ScrollView style={styles.container}>
-            <Text style={styles.header}>MerchMate</Text>
+    const getGarmentIcon = (type) => {
+        switch (type) {
+            case 'tshirt': return '👕';
+            case 'shirt': return '👔';
+            case 'jeans': return '👖';
+            default: return '📦';
+        }
+    };
 
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Style Info</Text>
-                <TextInput style={styles.input} placeholder="Style Name" value={formData.style_name} onChangeText={t => handleChange('style_name', t)} />
-                <TextInput style={styles.input} placeholder="Buyer Name" value={formData.buyer_name} onChangeText={t => handleChange('buyer_name', t)} />
+    const renderInput = (label, field, placeholder, unit = '') => (
+        <View style={styles.inputWrapper}>
+            <Text style={styles.inputLabel}>{label} {unit && <Text style={styles.unitText}>({unit})</Text>}</Text>
+            <TextInput
+                style={styles.input}
+                keyboardType="decimal-pad"
+                value={String(formData[field])}
+                onChangeText={t => handleNumericChange(field, t)}
+                placeholder={placeholder}
+                placeholderTextColor="#aaa"
+            />
+        </View>
+    );
+
+    return (
+        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+            {/* Header */}
+            <View style={styles.header}>
+                <Text style={styles.headerIcon}>📝</Text>
+                <Text style={styles.headerTitle}>FOB Cost Sheet</Text>
+                <Text style={styles.headerSubtitle}>Calculate accurate garment costing</Text>
+            </View>
+
+            {/* Style Info Card */}
+            <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                    <Text style={styles.cardIcon}>🏷️</Text>
+                    <Text style={styles.cardTitle}>Style Information</Text>
+                </View>
+                <View style={styles.cardContent}>
+                    <View style={styles.inputWrapper}>
+                        <Text style={styles.inputLabel}>Style Name</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Enter style name"
+                            placeholderTextColor="#aaa"
+                            value={formData.style_name}
+                            onChangeText={t => handleChange('style_name', t)}
+                        />
+                    </View>
+                    <View style={styles.inputWrapper}>
+                        <Text style={styles.inputLabel}>Buyer Name</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Enter buyer name"
+                            placeholderTextColor="#aaa"
+                            value={formData.buyer_name}
+                            onChangeText={t => handleChange('buyer_name', t)}
+                        />
+                    </View>
+                </View>
             </View>
 
             {/* Garment Type Selector */}
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Garment Type</Text>
-                <View style={styles.garmentTypeContainer}>
-                    <TouchableOpacity
-                        style={[styles.typeButton, garmentType === 'tshirt' && styles.typeButtonActive]}
-                        onPress={() => handleGarmentTypeChange('tshirt')}
-                    >
-                        <Text style={[styles.typeButtonText, garmentType === 'tshirt' && styles.typeButtonTextActive]}>T-Shirt (Knit)</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.typeButton, garmentType === 'shirt' && styles.typeButtonActive]}
-                        onPress={() => handleGarmentTypeChange('shirt')}
-                    >
-                        <Text style={[styles.typeButtonText, garmentType === 'shirt' && styles.typeButtonTextActive]}>Woven Shirt</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.typeButton, garmentType === 'jeans' && styles.typeButtonActive]}
-                        onPress={() => handleGarmentTypeChange('jeans')}
-                    >
-                        <Text style={[styles.typeButtonText, garmentType === 'jeans' && styles.typeButtonTextActive]}>Denim Jeans</Text>
-                    </TouchableOpacity>
+            <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                    <Text style={styles.cardIcon}>👗</Text>
+                    <Text style={styles.cardTitle}>Garment Type</Text>
+                </View>
+                <View style={styles.typeSelector}>
+                    {[
+                        { key: 'tshirt', label: 'T-Shirt', sub: 'Knit', icon: '👕' },
+                        { key: 'shirt', label: 'Shirt', sub: 'Woven', icon: '👔' },
+                        { key: 'jeans', label: 'Jeans', sub: 'Denim', icon: '👖' },
+                    ].map((item) => (
+                        <TouchableOpacity
+                            key={item.key}
+                            style={[styles.typeCard, garmentType === item.key && styles.typeCardActive]}
+                            onPress={() => handleGarmentTypeChange(item.key)}
+                        >
+                            <Text style={styles.typeIcon}>{item.icon}</Text>
+                            <Text style={[styles.typeLabel, garmentType === item.key && styles.typeLabelActive]}>
+                                {item.label}
+                            </Text>
+                            <Text style={[styles.typeSub, garmentType === item.key && styles.typeSubActive]}>
+                                {item.sub}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
                 </View>
             </View>
 
             {/* T-Shirt Fields */}
             {garmentType === 'tshirt' && (
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>T-Shirt Dimensions (cm)</Text>
-                    <Text>Fabric Type</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="e.g. Single Jersey"
-                        value={formData.fabric_type}
-                        onChangeText={t => handleChange('fabric_type', t)}
-                    />
-
-                    <Text>GSM (Fabric Weight)</Text>
-                    <TextInput
-                        style={styles.input}
-                        keyboardType="decimal-pad"
-                        value={String(formData.gsm)}
-                        onChangeText={t => handleNumericChange('gsm', t)}
-                    />
-
-                    <View style={styles.row}>
-                        <View style={{ flex: 1, marginRight: 5 }}>
-                            <Text>Body Length (cm)</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.body_length)} onChangeText={t => handleNumericChange('body_length', t)} />
+                <>
+                    <View style={styles.card}>
+                        <View style={styles.cardHeader}>
+                            <Text style={styles.cardIcon}>📏</Text>
+                            <Text style={styles.cardTitle}>T-Shirt Dimensions</Text>
+                            <View style={styles.unitBadge}>
+                                <Text style={styles.unitBadgeText}>cm</Text>
+                            </View>
                         </View>
-                        <View style={{ flex: 1, marginLeft: 5 }}>
-                            <Text>Chest Width (cm)</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.chest_width)} onChangeText={t => handleNumericChange('chest_width', t)} />
-                        </View>
-                    </View>
-                    <View style={styles.row}>
-                        <View style={{ flex: 1, marginRight: 5 }}>
-                            <Text>Sleeve Length (cm)</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.sleeve_length)} onChangeText={t => handleNumericChange('sleeve_length', t)} />
-                        </View>
-                        <View style={{ flex: 1, marginLeft: 5 }}>
-                            <Text>Wastage %</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.wastage_percent)} onChangeText={t => handleNumericChange('wastage_percent', t)} />
-                        </View>
-                    </View>
-                    <View style={styles.row}>
-                        <View style={{ flex: 1 }}>
-                            <Text>Fabric Allowance (cm)</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.fabric_allowance)} onChangeText={t => handleNumericChange('fabric_allowance', t)} />
+                        <View style={styles.cardContent}>
+                            <View style={styles.inputWrapper}>
+                                <Text style={styles.inputLabel}>Fabric Type</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="e.g. Single Jersey"
+                                    placeholderTextColor="#aaa"
+                                    value={formData.fabric_type}
+                                    onChangeText={t => handleChange('fabric_type', t)}
+                                />
+                            </View>
+                            {renderInput('GSM', 'gsm', 'e.g. 160', 'g/m²')}
+                            <View style={styles.row}>
+                                <View style={styles.halfInput}>
+                                    {renderInput('Body Length', 'body_length', '72')}
+                                </View>
+                                <View style={styles.halfInput}>
+                                    {renderInput('Chest Width', 'chest_width', '54')}
+                                </View>
+                            </View>
+                            <View style={styles.row}>
+                                <View style={styles.halfInput}>
+                                    {renderInput('Sleeve Length', 'sleeve_length', '24')}
+                                </View>
+                                <View style={styles.halfInput}>
+                                    {renderInput('Wastage', 'wastage_percent', '10', '%')}
+                                </View>
+                            </View>
+                            {renderInput('Fabric Allowance', 'fabric_allowance', '4', 'cm')}
                         </View>
                     </View>
 
-                    <Text style={styles.sectionTitle}>Knit Fabric Costs (USD/kg)</Text>
-                    <View style={styles.row}>
-                        <View style={styles.col}>
-                            <Text>Yarn ($/kg)</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.yarn_price_per_kg)} onChangeText={t => handleNumericChange('yarn_price_per_kg', t)} />
+                    <View style={styles.card}>
+                        <View style={styles.cardHeader}>
+                            <Text style={styles.cardIcon}>💵</Text>
+                            <Text style={styles.cardTitle}>Knit Fabric Costs</Text>
+                            <View style={styles.unitBadge}>
+                                <Text style={styles.unitBadgeText}>$/kg</Text>
+                            </View>
                         </View>
-                        <View style={styles.col}>
-                            <Text>Knit ($/kg)</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.knitting_charge_per_kg)} onChangeText={t => handleNumericChange('knitting_charge_per_kg', t)} />
-                        </View>
-                        <View style={styles.col}>
-                            <Text>Dye ($/kg)</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.dyeing_charge_per_kg)} onChangeText={t => handleNumericChange('dyeing_charge_per_kg', t)} />
+                        <View style={styles.cardContent}>
+                            <View style={styles.row}>
+                                <View style={styles.thirdInput}>
+                                    {renderInput('Yarn', 'yarn_price_per_kg', '4.50')}
+                                </View>
+                                <View style={styles.thirdInput}>
+                                    {renderInput('Knitting', 'knitting_charge_per_kg', '0.50')}
+                                </View>
+                                <View style={styles.thirdInput}>
+                                    {renderInput('Dyeing', 'dyeing_charge_per_kg', '1.20')}
+                                </View>
+                            </View>
                         </View>
                     </View>
-                </View>
+                </>
             )}
 
             {/* Woven Shirt Fields */}
             {garmentType === 'shirt' && (
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Woven Shirt Dimensions (inches)</Text>
-                    <View style={styles.row}>
-                        <View style={{ flex: 1, marginRight: 5 }}>
-                            <Text>Body Length (in)</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.shirt_body_length)} onChangeText={t => handleNumericChange('shirt_body_length', t)} />
+                <>
+                    <View style={styles.card}>
+                        <View style={styles.cardHeader}>
+                            <Text style={styles.cardIcon}>📏</Text>
+                            <Text style={styles.cardTitle}>Woven Shirt Dimensions</Text>
+                            <View style={styles.unitBadge}>
+                                <Text style={styles.unitBadgeText}>inches</Text>
+                            </View>
                         </View>
-                        <View style={{ flex: 1, marginLeft: 5 }}>
-                            <Text>Chest Width (in)</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.shirt_chest_width)} onChangeText={t => handleNumericChange('shirt_chest_width', t)} />
-                        </View>
-                    </View>
-                    <View style={styles.row}>
-                        <View style={{ flex: 1, marginRight: 5 }}>
-                            <Text>Sleeve Length (in)</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.shirt_sleeve_length)} onChangeText={t => handleNumericChange('shirt_sleeve_length', t)} />
-                        </View>
-                        <View style={{ flex: 1, marginLeft: 5 }}>
-                            <Text>Collar Size (in)</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.shirt_collar)} onChangeText={t => handleNumericChange('shirt_collar', t)} />
-                        </View>
-                    </View>
-                    <View style={styles.row}>
-                        <View style={{ flex: 1, marginRight: 5 }}>
-                            <Text>Fabric Width (in)</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.fabric_width)} onChangeText={t => handleNumericChange('fabric_width', t)} />
-                        </View>
-                        <View style={{ flex: 1, marginLeft: 5 }}>
-                            <Text>Wastage %</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.shirt_wastage_percent)} onChangeText={t => handleNumericChange('shirt_wastage_percent', t)} />
-                        </View>
-                    </View>
-                    <View style={styles.row}>
-                        <View style={{ flex: 1 }}>
-                            <Text>Fabric Allowance (in)</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.shirt_fabric_allowance)} onChangeText={t => handleNumericChange('shirt_fabric_allowance', t)} />
+                        <View style={styles.cardContent}>
+                            <View style={styles.row}>
+                                <View style={styles.halfInput}>
+                                    {renderInput('Body Length', 'shirt_body_length', '30')}
+                                </View>
+                                <View style={styles.halfInput}>
+                                    {renderInput('Chest Width', 'shirt_chest_width', '22')}
+                                </View>
+                            </View>
+                            <View style={styles.row}>
+                                <View style={styles.halfInput}>
+                                    {renderInput('Sleeve Length', 'shirt_sleeve_length', '25')}
+                                </View>
+                                <View style={styles.halfInput}>
+                                    {renderInput('Collar Size', 'shirt_collar', '16')}
+                                </View>
+                            </View>
+                            <View style={styles.row}>
+                                <View style={styles.halfInput}>
+                                    {renderInput('Fabric Width', 'fabric_width', '60')}
+                                </View>
+                                <View style={styles.halfInput}>
+                                    {renderInput('Wastage', 'shirt_wastage_percent', '5', '%')}
+                                </View>
+                            </View>
+                            {renderInput('Fabric Allowance', 'shirt_fabric_allowance', '2', 'in')}
                         </View>
                     </View>
 
-                    <Text style={styles.sectionTitle}>Woven Fabric Cost</Text>
-                    <Text>Fabric Price ($/Yard)</Text>
-                    <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.fabric_price_per_yard)} onChangeText={t => handleNumericChange('fabric_price_per_yard', t)} />
-                </View>
+                    <View style={styles.card}>
+                        <View style={styles.cardHeader}>
+                            <Text style={styles.cardIcon}>💵</Text>
+                            <Text style={styles.cardTitle}>Woven Fabric Cost</Text>
+                        </View>
+                        <View style={styles.cardContent}>
+                            {renderInput('Fabric Price', 'fabric_price_per_yard', '3.50', '$/yard')}
+                        </View>
+                    </View>
+                </>
             )}
 
             {/* Denim Jeans Fields */}
             {garmentType === 'jeans' && (
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Denim Jeans Dimensions (inches)</Text>
-                    <View style={styles.row}>
-                        <View style={{ flex: 1, marginRight: 5 }}>
-                            <Text>Waist (in)</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.waist)} onChangeText={t => handleNumericChange('waist', t)} />
+                <>
+                    <View style={styles.card}>
+                        <View style={styles.cardHeader}>
+                            <Text style={styles.cardIcon}>📏</Text>
+                            <Text style={styles.cardTitle}>Denim Jeans Dimensions</Text>
+                            <View style={styles.unitBadge}>
+                                <Text style={styles.unitBadgeText}>inches</Text>
+                            </View>
                         </View>
-                        <View style={{ flex: 1, marginLeft: 5 }}>
-                            <Text>Inseam (in)</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.inseam)} onChangeText={t => handleNumericChange('inseam', t)} />
-                        </View>
-                    </View>
-                    <View style={styles.row}>
-                        <View style={{ flex: 1, marginRight: 5 }}>
-                            <Text>Thigh Width (in)</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.thigh_width)} onChangeText={t => handleNumericChange('thigh_width', t)} />
-                        </View>
-                        <View style={{ flex: 1, marginLeft: 5 }}>
-                            <Text>Front Rise (in)</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.front_rise)} onChangeText={t => handleNumericChange('front_rise', t)} />
-                        </View>
-                    </View>
-                    <View style={styles.row}>
-                        <View style={{ flex: 1, marginRight: 5 }}>
-                            <Text>Back Rise (in)</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.back_rise)} onChangeText={t => handleNumericChange('back_rise', t)} />
-                        </View>
-                        <View style={{ flex: 1, marginLeft: 5 }}>
-                            <Text>Leg Opening (in)</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.leg_opening)} onChangeText={t => handleNumericChange('leg_opening', t)} />
-                        </View>
-                    </View>
-                    <View style={styles.row}>
-                        <View style={{ flex: 1, marginRight: 5 }}>
-                            <Text>Denim Width (in)</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.denim_fabric_width)} onChangeText={t => handleNumericChange('denim_fabric_width', t)} />
-                        </View>
-                        <View style={{ flex: 1, marginLeft: 5 }}>
-                            <Text>Wastage %</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.jeans_wastage_percent)} onChangeText={t => handleNumericChange('jeans_wastage_percent', t)} />
-                        </View>
-                    </View>
-                    <View style={styles.row}>
-                        <View style={{ flex: 1 }}>
-                            <Text>Fabric Allowance (in)</Text>
-                            <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.jeans_fabric_allowance)} onChangeText={t => handleNumericChange('jeans_fabric_allowance', t)} />
+                        <View style={styles.cardContent}>
+                            <View style={styles.row}>
+                                <View style={styles.halfInput}>
+                                    {renderInput('Waist', 'waist', '34')}
+                                </View>
+                                <View style={styles.halfInput}>
+                                    {renderInput('Inseam', 'inseam', '32')}
+                                </View>
+                            </View>
+                            <View style={styles.row}>
+                                <View style={styles.halfInput}>
+                                    {renderInput('Thigh Width', 'thigh_width', '12')}
+                                </View>
+                                <View style={styles.halfInput}>
+                                    {renderInput('Front Rise', 'front_rise', '11')}
+                                </View>
+                            </View>
+                            <View style={styles.row}>
+                                <View style={styles.halfInput}>
+                                    {renderInput('Back Rise', 'back_rise', '15')}
+                                </View>
+                                <View style={styles.halfInput}>
+                                    {renderInput('Leg Opening', 'leg_opening', '8')}
+                                </View>
+                            </View>
+                            <View style={styles.row}>
+                                <View style={styles.halfInput}>
+                                    {renderInput('Denim Width', 'denim_fabric_width', '60')}
+                                </View>
+                                <View style={styles.halfInput}>
+                                    {renderInput('Wastage', 'jeans_wastage_percent', '5', '%')}
+                                </View>
+                            </View>
+                            {renderInput('Fabric Allowance', 'jeans_fabric_allowance', '2', 'in')}
                         </View>
                     </View>
 
-                    <Text style={styles.sectionTitle}>Denim Fabric Cost</Text>
-                    <Text>Fabric Price ($/Yard)</Text>
-                    <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.fabric_price_per_yard)} onChangeText={t => handleNumericChange('fabric_price_per_yard', t)} />
-                </View>
+                    <View style={styles.card}>
+                        <View style={styles.cardHeader}>
+                            <Text style={styles.cardIcon}>💵</Text>
+                            <Text style={styles.cardTitle}>Denim Fabric Cost</Text>
+                        </View>
+                        <View style={styles.cardContent}>
+                            {renderInput('Fabric Price', 'fabric_price_per_yard', '3.50', '$/yard')}
+                        </View>
+                    </View>
+                </>
             )}
 
             {/* Common Costs Section */}
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Other Costs (per Piece)</Text>
-                <View style={styles.row}>
-                    <View style={styles.col}>
-                        <Text style={styles.label}>AOP/Print            ($/dz)</Text>
-                        <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.aop_print_cost_per_pc)} onChangeText={t => handleNumericChange('aop_print_cost_per_pc', t)} />
-                    </View>
-                    <View style={styles.col}>
-                        <Text style={styles.label}>Accessories          ($/dz)</Text>
-                        <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.accessories_cost_per_pc)} onChangeText={t => handleNumericChange('accessories_cost_per_pc', t)} />
-                    </View>
-                    <View style={styles.col}>
-                        <Text style={styles.label}>CM Cost            ($/dz)</Text>
-                        <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.cm_cost_per_pc)} onChangeText={t => handleNumericChange('cm_cost_per_pc', t)} />
+            <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                    <Text style={styles.cardIcon}>🧵</Text>
+                    <Text style={styles.cardTitle}>Production Costs</Text>
+                    <View style={styles.unitBadge}>
+                        <Text style={styles.unitBadgeText}>$/doz</Text>
                     </View>
                 </View>
-
-                <Text style={styles.sectionTitle}>FOB-Essential Costs (per Piece)</Text>
-                <View style={styles.row}>
-                    <View style={styles.col}>
-                        <Text style={styles.label}>Washing            ($/dz)</Text>
-                        <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.washing_cost_per_pc)} onChangeText={t => handleNumericChange('washing_cost_per_pc', t)} />
-                    </View>
-                    <View style={styles.col}>
-                        <Text style={styles.label}>Commercial     ($/dz)</Text>
-                        <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.commercial_cost_per_pc)} onChangeText={t => handleNumericChange('commercial_cost_per_pc', t)} />
-                    </View>
-                    <View style={styles.col}>
-                        <Text style={styles.label}>Testing            ($/dz)</Text>
-                        <TextInput style={styles.input} keyboardType="decimal-pad" value={String(formData.testing_cost_per_pc)} onChangeText={t => handleNumericChange('testing_cost_per_pc', t)} />
+                <View style={styles.cardContent}>
+                    <View style={styles.row}>
+                        <View style={styles.thirdInput}>
+                            {renderInput('AOP/Print', 'aop_print_cost_per_pc', '0')}
+                        </View>
+                        <View style={styles.thirdInput}>
+                            {renderInput('Accessories', 'accessories_cost_per_pc', '2.04')}
+                        </View>
+                        <View style={styles.thirdInput}>
+                            {renderInput('CM Cost', 'cm_cost_per_pc', '12.00')}
+                        </View>
                     </View>
                 </View>
             </View>
 
-            <TouchableOpacity style={styles.button} onPress={handleCalculate} disabled={loading}>
-                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>CALCULATE FOB</Text>}
+            <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                    <Text style={styles.cardIcon}>📦</Text>
+                    <Text style={styles.cardTitle}>FOB Essential Costs</Text>
+                    <View style={styles.unitBadge}>
+                        <Text style={styles.unitBadgeText}>$/doz</Text>
+                    </View>
+                </View>
+                <View style={styles.cardContent}>
+                    <View style={styles.row}>
+                        <View style={styles.thirdInput}>
+                            {renderInput('Washing', 'washing_cost_per_pc', '6.00')}
+                        </View>
+                        <View style={styles.thirdInput}>
+                            {renderInput('Commercial', 'commercial_cost_per_pc', '9.60')}
+                        </View>
+                        <View style={styles.thirdInput}>
+                            {renderInput('Testing', 'testing_cost_per_pc', '3.60')}
+                        </View>
+                    </View>
+                </View>
+            </View>
+
+            {/* Calculate Button */}
+            <TouchableOpacity
+                style={[styles.calculateButton, loading && styles.calculateButtonDisabled]}
+                onPress={handleCalculate}
+                disabled={loading}
+            >
+                {loading ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                    <>
+                        <Text style={styles.calculateIcon}>🧮</Text>
+                        <Text style={styles.calculateText}>CALCULATE FOB</Text>
+                    </>
+                )}
             </TouchableOpacity>
 
-            <View style={{ height: 50 }} />
+            <View style={{ height: 40 }} />
         </ScrollView>
     );
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 20, backgroundColor: '#f5f5f5' },
-    header: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center', color: '#333' },
-    section: { backgroundColor: '#fff', padding: 15, borderRadius: 10, marginBottom: 15, elevation: 2 },
-    sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10, color: '#444' },
-    label: { fontSize: 13, color: '#555', marginBottom: 5 },
-    input: { borderWidth: 1, borderColor: '#ddd', padding: 10, borderRadius: 5, marginBottom: 10, backgroundColor: '#fafafa' },
-    row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-    col: { flex: 1, marginHorizontal: 5 },
-    garmentTypeContainer: { flexDirection: 'row', justifyContent: 'space-between' },
-    typeButton: { flex: 1, padding: 12, marginHorizontal: 3, borderRadius: 8, borderWidth: 2, borderColor: '#007bff', backgroundColor: '#fff' },
-    typeButtonActive: { backgroundColor: '#007bff' },
-    typeButtonText: { color: '#007bff', fontSize: 12, fontWeight: '600', textAlign: 'center' },
-    typeButtonTextActive: { color: '#fff' },
-    button: { backgroundColor: '#007bff', padding: 15, borderRadius: 10, alignItems: 'center', marginTop: 10 },
-    buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+    container: {
+        flex: 1,
+        backgroundColor: '#f0f2f5',
+    },
+    header: {
+        backgroundColor: '#007bff',
+        paddingTop: 20,
+        paddingBottom: 30,
+        paddingHorizontal: 20,
+        alignItems: 'center',
+        borderBottomLeftRadius: 30,
+        borderBottomRightRadius: 30,
+        marginBottom: 20,
+    },
+    headerIcon: {
+        fontSize: 40,
+        marginBottom: 8,
+    },
+    headerTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#fff',
+        marginBottom: 4,
+    },
+    headerSubtitle: {
+        fontSize: 14,
+        color: 'rgba(255,255,255,0.8)',
+    },
+    card: {
+        backgroundColor: '#fff',
+        marginHorizontal: 16,
+        marginBottom: 16,
+        borderRadius: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 3,
+        overflow: 'hidden',
+    },
+    cardHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        backgroundColor: '#f8f9fa',
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+    },
+    cardIcon: {
+        fontSize: 20,
+        marginRight: 10,
+    },
+    cardTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#333',
+        flex: 1,
+    },
+    unitBadge: {
+        backgroundColor: '#007bff15',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12,
+    },
+    unitBadgeText: {
+        fontSize: 12,
+        color: '#007bff',
+        fontWeight: '600',
+    },
+    cardContent: {
+        padding: 16,
+    },
+    typeSelector: {
+        flexDirection: 'row',
+        padding: 12,
+        gap: 10,
+    },
+    typeCard: {
+        flex: 1,
+        alignItems: 'center',
+        paddingVertical: 16,
+        paddingHorizontal: 8,
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: '#e0e0e0',
+        backgroundColor: '#fafafa',
+    },
+    typeCardActive: {
+        borderColor: '#007bff',
+        backgroundColor: '#f0f7ff',
+    },
+    typeIcon: {
+        fontSize: 32,
+        marginBottom: 8,
+    },
+    typeLabel: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#333',
+        marginBottom: 2,
+    },
+    typeLabelActive: {
+        color: '#007bff',
+    },
+    typeSub: {
+        fontSize: 11,
+        color: '#888',
+    },
+    typeSubActive: {
+        color: '#007bff',
+    },
+    inputWrapper: {
+        marginBottom: 12,
+    },
+    inputLabel: {
+        fontSize: 13,
+        fontWeight: '500',
+        color: '#555',
+        marginBottom: 6,
+    },
+    unitText: {
+        fontSize: 11,
+        color: '#888',
+        fontWeight: '400',
+    },
+    input: {
+        backgroundColor: '#f8f9fa',
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+        borderRadius: 10,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+        fontSize: 15,
+        color: '#333',
+    },
+    row: {
+        flexDirection: 'row',
+        marginHorizontal: -6,
+    },
+    halfInput: {
+        flex: 1,
+        paddingHorizontal: 6,
+    },
+    thirdInput: {
+        flex: 1,
+        paddingHorizontal: 6,
+    },
+    calculateButton: {
+        flexDirection: 'row',
+        backgroundColor: '#007bff',
+        marginHorizontal: 16,
+        marginTop: 8,
+        paddingVertical: 18,
+        borderRadius: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#007bff',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 5,
+    },
+    calculateButtonDisabled: {
+        backgroundColor: '#93c5fd',
+    },
+    calculateIcon: {
+        fontSize: 22,
+        marginRight: 10,
+    },
+    calculateText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: 'bold',
+        letterSpacing: 1,
+    },
 });
 
 export default InputScreen;
