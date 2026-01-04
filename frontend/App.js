@@ -2,6 +2,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
 import AboutScreen from './src/screens/AboutScreen';
+import BuyerAnalyzerInputScreen from './src/screens/BuyerAnalyzerInputScreen';
+import BuyerAnalyzerResultScreen from './src/screens/BuyerAnalyzerResultScreen';
 import DeveloperScreen from './src/screens/DeveloperScreen';
 import FabricAnalyzerInputScreen from './src/screens/FabricAnalyzerInputScreen';
 import FabricAnalyzerResultScreen from './src/screens/FabricAnalyzerResultScreen';
@@ -47,6 +49,16 @@ export default function App() {
             name="FabricAnalyzerResult"
             component={FabricAnalyzerResultScreen}
             options={{ title: 'Analysis Results' }}
+          />
+          <Stack.Screen
+            name="BuyerAnalyzerInput"
+            component={BuyerAnalyzerInputScreen}
+            options={{ title: 'Margin Analyzer' }}
+          />
+          <Stack.Screen
+            name="BuyerAnalyzerResult"
+            component={BuyerAnalyzerResultScreen}
+            options={{ title: 'Margin Analysis' }}
           />
           <Stack.Screen
             name="Developer"

@@ -4,165 +4,238 @@ import * as Sharing from 'expo-sharing';
 import * as XLSX from 'xlsx';
 
 const toNumber = (v) => {
-    const n = typeof v === 'string' ? parseFloat(v) : v;
-    return isNaN(n) ? 0 : n;
+  const n = typeof v === 'string' ? parseFloat(v) : v;
+  return isNaN(n) ? 0 : n;
 };
 
 export const buildFOBData = (inputs, breakdown, finalFob, profitMargin) => {
-    const isKnit = breakdown.garment_type === 'T-Shirt (Knit)';
-    const finalFobPerDoz = finalFob;
-    const finalFobPerPc = finalFob / 12;
-    const totalCostPerDoz = breakdown.total_cost_per_doz || (breakdown.total_cost_per_pc * 12);
-    const totalCostPerPc = breakdown.total_cost_per_pc;
-    const fabricCostPerDoz = breakdown.fabric_cost_per_doz || (breakdown.fabric_cost_per_pc * 12);
-    const fabricCostPerPc = breakdown.fabric_cost_per_pc;
+  const isKnit = breakdown.garment_type === 'T-Shirt (Knit)';
+  const finalFobPerDoz = finalFob;
+  const finalFobPerPc = finalFob / 12;
+  const totalCostPerDoz = breakdown.total_cost_per_doz || (breakdown.total_cost_per_pc * 12);
+  const totalCostPerPc = breakdown.total_cost_per_pc;
+  const fabricCostPerDoz = breakdown.fabric_cost_per_doz || (breakdown.fabric_cost_per_pc * 12);
+  const fabricCostPerPc = breakdown.fabric_cost_per_pc;
 
-    return {
-        style: inputs.style_name || 'N/A',
-        buyer: inputs.buyer_name || 'N/A',
-        garmentType: breakdown.garment_type || 'N/A',
-        profitMargin: toNumber(profitMargin),
-        finalFobPerDoz: Number(toNumber(finalFobPerDoz).toFixed(2)),
-        finalFobPerPc: Number(toNumber(finalFobPerPc).toFixed(2)),
-        totalCostPerDoz: Number(toNumber(totalCostPerDoz).toFixed(2)),
-        totalCostPerPc: Number(toNumber(totalCostPerPc).toFixed(2)),
-        costs: {
-            fabricPerDoz: Number(toNumber(fabricCostPerDoz).toFixed(2)),
-            fabricPerPc: Number(toNumber(fabricCostPerPc).toFixed(2)),
-            printPerDoz: Number(toNumber(inputs.aop_print_cost_per_pc * 12).toFixed(2)),
-            printPerPc: Number(toNumber(inputs.aop_print_cost_per_pc).toFixed(2)),
-            accessoriesPerDoz: Number(toNumber(inputs.accessories_cost_per_pc * 12).toFixed(2)),
-            accessoriesPerPc: Number(toNumber(inputs.accessories_cost_per_pc).toFixed(2)),
-            cmPerDoz: Number(toNumber(inputs.cm_cost_per_pc * 12).toFixed(2)),
-            cmPerPc: Number(toNumber(inputs.cm_cost_per_pc).toFixed(2)),
-            washingPerDoz: Number(toNumber(inputs.washing_cost_per_pc * 12).toFixed(2)),
-            washingPerPc: Number(toNumber(inputs.washing_cost_per_pc).toFixed(2)),
-            commercialPerDoz: Number(toNumber(inputs.commercial_cost_per_pc * 12).toFixed(2)),
-            commercialPerPc: Number(toNumber(inputs.commercial_cost_per_pc).toFixed(2)),
-            testingPerDoz: Number(toNumber(inputs.testing_cost_per_pc * 12).toFixed(2)),
-            testingPerPc: Number(toNumber(inputs.testing_cost_per_pc).toFixed(2)),
-        },
-        consumption: isKnit
-            ? {
-                basicLabel: 'Basic Cons (kg/doz)',
-                totalLabel: `Total Req (with ${inputs.wastage_percent ?? 'N/A'}%) (kg/doz)`,
-                basic: breakdown.basic_consumption_kg_doz,
-                total: breakdown.total_fabric_req_kg_doz,
-            }
-            : {
-                basicLabel: 'Basic Cons (yards/pc)',
-                totalLabel: `Total Req (with ${inputs.shirt_wastage_percent ?? inputs.jeans_wastage_percent ?? 'N/A'}%) (yards/doz)`,
-                basic: breakdown.basic_consumption_yards_piece,
-                total: breakdown.total_fabric_req_yards_doz,
-            },
-    };
+  return {
+    style: inputs.style_name || 'N/A',
+    buyer: inputs.buyer_name || 'N/A',
+    garmentType: breakdown.garment_type || 'N/A',
+    profitMargin: toNumber(profitMargin),
+    finalFobPerDoz: Number(toNumber(finalFobPerDoz).toFixed(2)),
+    finalFobPerPc: Number(toNumber(finalFobPerPc).toFixed(2)),
+    totalCostPerDoz: Number(toNumber(totalCostPerDoz).toFixed(2)),
+    totalCostPerPc: Number(toNumber(totalCostPerPc).toFixed(2)),
+    costs: {
+      fabricPerDoz: Number(toNumber(fabricCostPerDoz).toFixed(2)),
+      fabricPerPc: Number(toNumber(fabricCostPerPc).toFixed(2)),
+      printPerDoz: Number(toNumber(inputs.aop_print_cost_per_pc * 12).toFixed(2)),
+      printPerPc: Number(toNumber(inputs.aop_print_cost_per_pc).toFixed(2)),
+      accessoriesPerDoz: Number(toNumber(inputs.accessories_cost_per_pc * 12).toFixed(2)),
+      accessoriesPerPc: Number(toNumber(inputs.accessories_cost_per_pc).toFixed(2)),
+      cmPerDoz: Number(toNumber(inputs.cm_cost_per_pc * 12).toFixed(2)),
+      cmPerPc: Number(toNumber(inputs.cm_cost_per_pc).toFixed(2)),
+      washingPerDoz: Number(toNumber(inputs.washing_cost_per_pc * 12).toFixed(2)),
+      washingPerPc: Number(toNumber(inputs.washing_cost_per_pc).toFixed(2)),
+      commercialPerDoz: Number(toNumber(inputs.commercial_cost_per_pc * 12).toFixed(2)),
+      commercialPerPc: Number(toNumber(inputs.commercial_cost_per_pc).toFixed(2)),
+      testingPerDoz: Number(toNumber(inputs.testing_cost_per_pc * 12).toFixed(2)),
+      testingPerPc: Number(toNumber(inputs.testing_cost_per_pc).toFixed(2)),
+    },
+    consumption: isKnit
+      ? {
+        basicLabel: 'Basic Cons (kg/doz)',
+        totalLabel: `Total Req (with ${inputs.wastage_percent ?? 'N/A'}%) (kg/doz)`,
+        basic: breakdown.basic_consumption_kg_doz,
+        total: breakdown.total_fabric_req_kg_doz,
+      }
+      : {
+        basicLabel: 'Basic Cons (yards/pc)',
+        totalLabel: `Total Req (with ${inputs.shirt_wastage_percent ?? inputs.jeans_wastage_percent ?? 'N/A'}%) (yards/doz)`,
+        basic: breakdown.basic_consumption_yards_piece,
+        total: breakdown.total_fabric_req_yards_doz,
+      },
+  };
 };
 
 const timestamp = () => {
-    const d = new Date();
-    const pad = (x) => String(x).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`;
+  const d = new Date();
+  const pad = (x) => String(x).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`;
 };
 
 export const generateExcelFOB = async (data) => {
-    // Professional Excel layout with improved structure
-    const wsData = [
-        ['', '', '', ''],  // Row 0 - empty top margin
-        ['', 'MerchMate', '', ''],  // Row 1 - Brand
-        ['', 'FOB COSTING SHEET', '', ''],  // Row 2 - Title
-        ['', `Generated: ${new Date().toLocaleDateString('en-US', {
-            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
-        })}`, '', ''],  // Row 3 - Date
-        ['', '', '', ''],  // Row 4 - spacer
-        ['', 'STYLE DETAILS', '', ''],  // Row 5 - Section header
-        ['', 'Style Name', data.style, ''],  // Row 6
-        ['', 'Buyer', data.buyer, ''],  // Row 7
-        ['', 'Garment Type', data.garmentType, ''],  // Row 8
-        ['', '', '', ''],  // Row 9 - spacer
-        ['', 'COST BREAKDOWN', '', ''],  // Row 10 - Section header
-        ['', 'Component', 'Per Piece', 'Per Dozen'],  // Row 11 - Table header
-        ['', '🧵 Fabric', `$${data.costs.fabricPerPc.toFixed(2)}`, `$${data.costs.fabricPerDoz.toFixed(2)}`],  // Row 12
-        ['', '🎨 Print/AOP', `$${data.costs.printPerPc.toFixed(2)}`, `$${data.costs.printPerDoz.toFixed(2)}`],  // Row 13
-        ['', '🔘 Accessories', `$${data.costs.accessoriesPerPc.toFixed(2)}`, `$${data.costs.accessoriesPerDoz.toFixed(2)}`],  // Row 14
-        ['', '✂️ CM Cost', `$${data.costs.cmPerPc.toFixed(2)}`, `$${data.costs.cmPerDoz.toFixed(2)}`],  // Row 15
-        ['', '💧 Washing', `$${data.costs.washingPerPc.toFixed(2)}`, `$${data.costs.washingPerDoz.toFixed(2)}`],  // Row 16
-        ['', '📋 Commercial', `$${data.costs.commercialPerPc.toFixed(2)}`, `$${data.costs.commercialPerDoz.toFixed(2)}`],  // Row 17
-        ['', '🔬 Testing', `$${data.costs.testingPerPc.toFixed(2)}`, `$${data.costs.testingPerDoz.toFixed(2)}`],  // Row 18
-        ['', '', '', ''],  // Row 19 - spacer
-        ['', 'SUMMARY', '', ''],  // Row 20 - Section header
-        ['', 'Total Cost', `$${data.totalCostPerPc.toFixed(2)}`, `$${data.totalCostPerDoz.toFixed(2)}`],  // Row 21
-        ['', 'Profit Margin', `${data.profitMargin}%`, ''],  // Row 22
-        ['', '★ FINAL FOB PRICE', `$${data.finalFobPerPc.toFixed(2)}`, `$${data.finalFobPerDoz.toFixed(2)}`],  // Row 23
-        ['', '', '', ''],  // Row 24 - spacer
-        ['', 'CONSUMPTION', '', ''],  // Row 25 - Section header
-        ['', data.consumption.basicLabel, data.consumption.basic, ''],  // Row 26
-        ['', data.consumption.totalLabel, data.consumption.total, ''],  // Row 27
-        ['', '', '', ''],  // Row 28 - spacer
-        ['', '', '', ''],  // Row 29 - bottom margin
-    ];
+  // Professional styled Excel using HTML tables
+  const generatedDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+  });
 
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #fff; }
+    .title { font-size: 20px; font-weight: bold; color: #007bff; text-align: center; margin-bottom: 5px; }
+    .subtitle { font-size: 14px; color: #666; text-align: center; margin-bottom: 20px; }
+    .section-header { 
+      background: #495057; 
+      color: white; 
+      font-size: 13px; 
+      font-weight: bold; 
+      padding: 8px 12px; 
+      margin-top: 15px; 
+      margin-bottom: 0;
+      border-radius: 4px 4px 0 0;
+    }
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin-bottom: 15px; 
+      font-size: 12px;
+    }
+    th { 
+      background: #007bff; 
+      color: white; 
+      padding: 10px 12px; 
+      text-align: left; 
+      font-size: 13px;
+      font-weight: bold;
+      border: 1px solid #0056b3;
+    }
+    td { 
+      padding: 8px 12px; 
+      border: 1px solid #dee2e6; 
+      background: #fff;
+    }
+    tr:nth-child(even) td { background: #f8f9fa; }
+    .label { font-weight: 500; color: #333; }
+    .value { color: #007bff; font-weight: 600; }
+    .highlight-row td { background: #e7f3ff !important; }
+    .final-row td { 
+      background: #007bff !important; 
+      color: white !important; 
+      font-weight: bold; 
+      font-size: 14px;
+    }
+    .footer { 
+      text-align: center; 
+      font-size: 11px; 
+      color: #999; 
+      margin-top: 20px; 
+      padding-top: 10px;
+      border-top: 1px solid #eee;
+    }
+  </style>
+</head>
+<body>
+  <div class="title">📊 MerchMate</div>
+  <div class="subtitle">FOB COSTING SHEET • ${generatedDate}</div>
 
-    // Set column widths for professional look
-    ws['!cols'] = [
-        { wch: 3 },   // Column A - left margin
-        { wch: 28 },  // Column B - labels
-        { wch: 16 },  // Column C - per piece values
-        { wch: 16 },  // Column D - per dozen values
-    ];
+  <div class="section-header">📋 STYLE DETAILS</div>
+  <table>
+    <tr><td class="label" width="40%">Style Name</td><td class="value">${data.style}</td></tr>
+    <tr><td class="label">Buyer</td><td class="value">${data.buyer}</td></tr>
+    <tr><td class="label">Garment Type</td><td class="value">${data.garmentType}</td></tr>
+  </table>
 
-    // Set row heights
-    ws['!rows'] = [
-        { hpt: 10 },  // Row 0 - top margin
-        { hpt: 30 },  // Row 1 - Brand
-        { hpt: 25 },  // Row 2 - Title
-        { hpt: 18 },  // Row 3 - Date
-        { hpt: 12 },  // Row 4 - spacer
-        { hpt: 24 },  // Row 5 - Section header
-        { hpt: 20 },  // Row 6-8 - Style details
-        { hpt: 20 },
-        { hpt: 20 },
-        { hpt: 12 },  // Row 9 - spacer
-        { hpt: 24 },  // Row 10 - Section header
-        { hpt: 22 },  // Row 11 - Table header
-        { hpt: 20 },  // Row 12-18 - Cost rows
-        { hpt: 20 },
-        { hpt: 20 },
-        { hpt: 20 },
-        { hpt: 20 },
-        { hpt: 20 },
-        { hpt: 20 },
-        { hpt: 12 },  // Row 19 - spacer
-        { hpt: 24 },  // Row 20 - Section header
-        { hpt: 22 },  // Row 21-23 - Summary
-        { hpt: 20 },
-        { hpt: 28 },  // Row 23 - Final FOB (taller)
-    ];
+  <div class="section-header">💰 COST BREAKDOWN</div>
+  <table>
+    <tr>
+      <th width="40%">Component</th>
+      <th width="30%">Per Piece</th>
+      <th width="30%">Per Dozen</th>
+    </tr>
+    <tr>
+      <td class="label">🧵 Fabric</td>
+      <td class="value">$${data.costs.fabricPerPc.toFixed(2)}</td>
+      <td class="value">$${data.costs.fabricPerDoz.toFixed(2)}</td>
+    </tr>
+    <tr>
+      <td class="label">🎨 Print/AOP</td>
+      <td class="value">$${data.costs.printPerPc.toFixed(2)}</td>
+      <td class="value">$${data.costs.printPerDoz.toFixed(2)}</td>
+    </tr>
+    <tr>
+      <td class="label">🔘 Accessories</td>
+      <td class="value">$${data.costs.accessoriesPerPc.toFixed(2)}</td>
+      <td class="value">$${data.costs.accessoriesPerDoz.toFixed(2)}</td>
+    </tr>
+    <tr>
+      <td class="label">✂️ CM Cost</td>
+      <td class="value">$${data.costs.cmPerPc.toFixed(2)}</td>
+      <td class="value">$${data.costs.cmPerDoz.toFixed(2)}</td>
+    </tr>
+    <tr>
+      <td class="label">💧 Washing</td>
+      <td class="value">$${data.costs.washingPerPc.toFixed(2)}</td>
+      <td class="value">$${data.costs.washingPerDoz.toFixed(2)}</td>
+    </tr>
+    <tr>
+      <td class="label">📋 Commercial</td>
+      <td class="value">$${data.costs.commercialPerPc.toFixed(2)}</td>
+      <td class="value">$${data.costs.commercialPerDoz.toFixed(2)}</td>
+    </tr>
+    <tr>
+      <td class="label">🔬 Testing</td>
+      <td class="value">$${data.costs.testingPerPc.toFixed(2)}</td>
+      <td class="value">$${data.costs.testingPerDoz.toFixed(2)}</td>
+    </tr>
+  </table>
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'FOB Costing');
+  <div class="section-header">📊 SUMMARY</div>
+  <table>
+    <tr>
+      <th width="40%">Item</th>
+      <th width="30%">Per Piece</th>
+      <th width="30%">Per Dozen</th>
+    </tr>
+    <tr class="highlight-row">
+      <td class="label">Total Cost</td>
+      <td class="value">$${data.totalCostPerPc.toFixed(2)}</td>
+      <td class="value">$${data.totalCostPerDoz.toFixed(2)}</td>
+    </tr>
+    <tr>
+      <td class="label">Profit Margin</td>
+      <td class="value" colspan="2">${data.profitMargin}%</td>
+    </tr>
+    <tr class="final-row">
+      <td>★ FINAL FOB PRICE</td>
+      <td>$${data.finalFobPerPc.toFixed(2)}</td>
+      <td>$${data.finalFobPerDoz.toFixed(2)}</td>
+    </tr>
+  </table>
 
-    const b64 = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+  <div class="section-header">📦 CONSUMPTION</div>
+  <table>
+    <tr><td class="label" width="50%">${data.consumption.basicLabel}</td><td class="value">${data.consumption.basic}</td></tr>
+    <tr><td class="label">${data.consumption.totalLabel}</td><td class="value">${data.consumption.total}</td></tr>
+  </table>
 
-    const safeStyle = String(data.style).replace(/[^a-z0-9_-]/gi, '_');
-    const fileName = `MerchMate_FOB_${safeStyle}_${timestamp()}.xlsx`;
-    const fileUri = FileSystem.documentDirectory + fileName;
-    await FileSystem.writeAsStringAsync(fileUri, b64, { encoding: 'base64' });
-    return fileUri;
+  <div class="footer">Generated by MerchMate - Your Garment Costing Partner</div>
+</body>
+</html>`;
+
+  const safeStyle = String(data.style).replace(/[^a-z0-9_-]/gi, '_');
+  const fileName = `MerchMate_FOB_${safeStyle}_${timestamp()}.xls`;
+  const fileUri = FileSystem.documentDirectory + fileName;
+  await FileSystem.writeAsStringAsync(fileUri, htmlContent, { encoding: 'utf8' });
+  return fileUri;
 };
 
 export const generatePdfFOB = async (data) => {
-    const currency = (n) => `$${Number(n).toFixed(2)}`;
+  const currency = (n) => `$${Number(n).toFixed(2)}`;
 
-    // Get garment icon for display
-    const getGarmentIcon = () => {
-        if (data.garmentType.includes('Knit')) return '👕';
-        if (data.garmentType.includes('Woven')) return '👔';
-        if (data.garmentType.includes('Denim')) return '👖';
-        return '📦';
-    };
+  // Get garment icon for display
+  const getGarmentIcon = () => {
+    if (data.garmentType.includes('Knit')) return '👕';
+    if (data.garmentType.includes('Woven')) return '👔';
+    if (data.garmentType.includes('Denim')) return '👖';
+    return '📦';
+  };
 
-    const html = `
+  const html = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -603,53 +676,53 @@ export const generatePdfFOB = async (data) => {
 </body>
 </html>`;
 
-    const { uri } = await Print.printToFileAsync({ html });
+  const { uri } = await Print.printToFileAsync({ html });
 
-    // Move/rename into documentDirectory with friendly name
-    const safeStyle = String(data.style).replace(/[^a-z0-9_-]/gi, '_');
-    const fileName = `MerchMate_FOB_${safeStyle}_${timestamp()}.pdf`;
-    const dest = FileSystem.documentDirectory + fileName;
-    try {
-        await FileSystem.moveAsync({ from: uri, to: dest });
-        return dest;
-    } catch {
-        return uri; // fallback to original
-    }
+  // Move/rename into documentDirectory with friendly name
+  const safeStyle = String(data.style).replace(/[^a-z0-9_-]/gi, '_');
+  const fileName = `MerchMate_FOB_${safeStyle}_${timestamp()}.pdf`;
+  const dest = FileSystem.documentDirectory + fileName;
+  try {
+    await FileSystem.moveAsync({ from: uri, to: dest });
+    return dest;
+  } catch {
+    return uri; // fallback to original
+  }
 };
 
 export const shareFile = async (uri) => {
-    const available = await Sharing.isAvailableAsync();
-    if (!available) {
-        throw new Error('Sharing is not available on this device');
-    }
-    await Sharing.shareAsync(uri);
+  const available = await Sharing.isAvailableAsync();
+  if (!available) {
+    throw new Error('Sharing is not available on this device');
+  }
+  await Sharing.shareAsync(uri);
 };
 
 // ===== FABRIC ANALYSIS EXPORT FUNCTIONS =====
 
 const getGarmentTypeLabel = (type) => {
-    switch (type) {
-        case 'knit': return 'Knit (T-Shirt/Polo)';
-        case 'woven': return 'Woven (Shirt/Blouse)';
-        case 'denim': return 'Denim (Jeans/Jacket)';
-        default: return type;
-    }
+  switch (type) {
+    case 'knit': return 'Knit (T-Shirt/Polo)';
+    case 'woven': return 'Woven (Shirt/Blouse)';
+    case 'denim': return 'Denim (Jeans/Jacket)';
+    default: return type;
+  }
 };
 
 const formatNumber = (num, decimals = 2) => {
-    if (num === undefined || num === null) return '-';
-    return Number(num).toFixed(decimals);
+  if (num === undefined || num === null) return '-';
+  return Number(num).toFixed(decimals);
 };
 
 /**
  * Share Fabric Analysis as formatted text (WhatsApp, Email, etc.)
  */
 export const shareFabricAnalysisAsText = async (data) => {
-    const unit = data.unit;
-    const priceLabel = unit === 'kg' ? '/kg' : '/yard';
-    const price = data.fabricPricePerKg || data.fabricPricePerYard;
+  const unit = data.unit;
+  const priceLabel = unit === 'kg' ? '/kg' : '/yard';
+  const price = data.fabricPricePerKg || data.fabricPricePerYard;
 
-    const text = `📊 *MerchMate Fabric Analysis*
+  const text = `📊 *MerchMate Fabric Analysis*
 ━━━━━━━━━━━━━━━━━━━━━
 
 📋 *Style Information*
@@ -701,194 +774,382 @@ Fabric % of FOB: ${formatNumber(data.fobData.fabricPercentageOfFOB)}%` : ''}
 Generated by MerchMate
 ${new Date().toLocaleString()}`;
 
-    await Sharing.shareAsync('data:text/plain;base64,' + btoa(unescape(encodeURIComponent(text))), {
-        mimeType: 'text/plain',
-        dialogTitle: 'Share Fabric Analysis',
-        UTI: 'public.plain-text',
-    }).catch(async () => {
-        // Fallback: save to file and share
-        const fileName = `FabricAnalysis_${data.styleName || 'report'}_${timestamp()}.txt`;
-        const fileUri = FileSystem.documentDirectory + fileName;
-        await FileSystem.writeAsStringAsync(fileUri, text);
-        await Sharing.shareAsync(fileUri);
-    });
+  await Sharing.shareAsync('data:text/plain;base64,' + btoa(unescape(encodeURIComponent(text))), {
+    mimeType: 'text/plain',
+    dialogTitle: 'Share Fabric Analysis',
+    UTI: 'public.plain-text',
+  }).catch(async () => {
+    // Fallback: save to file and share
+    const fileName = `FabricAnalysis_${data.styleName || 'report'}_${timestamp()}.txt`;
+    const fileUri = FileSystem.documentDirectory + fileName;
+    await FileSystem.writeAsStringAsync(fileUri, text);
+    await Sharing.shareAsync(fileUri);
+  });
 };
 
 /**
  * Generate and share Fabric Analysis as Excel file
  */
 export const shareFabricAnalysisAsExcel = async (data) => {
-    const uri = await generateFabricAnalysisExcel(data);
-    await shareFile(uri);
+  const uri = await generateFabricAnalysisExcel(data);
+  await shareFile(uri);
 };
 
 /**
  * Generate Fabric Analysis Excel file
  */
 export const generateFabricAnalysisExcel = async (data) => {
-    const unit = data.unit;
-    const priceLabel = unit === 'kg' ? '/kg' : '/yard';
-    const price = data.fabricPricePerKg || data.fabricPricePerYard;
-    const dimensionUnit = data.garmentType === 'knit' ? 'cm' : 'in';
+  const unit = data.unit;
+  const priceLabel = unit === 'kg' ? '/kg' : '/yard';
+  const price = data.fabricPricePerKg || data.fabricPricePerYard;
+  const dimensionUnit = data.garmentType === 'knit' ? 'cm' : 'in';
+  const generatedDate = new Date().toLocaleString();
 
-    const wsData = [
-        // Header Section
-        ['', '', '', ''],
-        ['', '🧵 MERCHMATE FABRIC ANALYSIS', '', ''],
-        ['', 'Fabric Consumption & Marker Efficiency Report', '', ''],
-        ['', '', '', ''],
+  // Build additional rows for garment-specific fields
+  let garmentSpecificRows = '';
+  if (data.garmentType === 'knit') {
+    garmentSpecificRows += `<tr><td class="label">GSM (Grams/Sq Meter)</td><td class="value">${data.inputs?.gsm || 'N/A'}</td><td></td></tr>`;
+  }
+  if (data.garmentType === 'denim') {
+    garmentSpecificRows += `<tr><td class="label">Fabric Weight</td><td class="value">${data.inputs?.fabricWeight || 'N/A'}</td><td>oz/sq.yd</td></tr>`;
+  }
+  if (data.patternsAcrossFabric) {
+    garmentSpecificRows += `<tr><td class="label">Patterns Across Width</td><td class="value">${data.patternsAcrossFabric}</td><td>pieces</td></tr>`;
+  }
 
-        // Style Information
-        ['', 'STYLE INFORMATION', '', ''],
-        ['', 'Style Name', data.styleName || 'N/A', ''],
-        ['', 'Buyer', data.buyerName || 'N/A', ''],
-        ['', 'Garment Type', getGarmentTypeLabel(data.garmentType), ''],
-        ['', 'Generated', new Date().toLocaleString(), ''],
-        ['', '', '', ''],
+  // Build FOB impact section if available
+  let fobImpactSection = '';
+  if (data.fobData) {
+    fobImpactSection = `
+    <div class="section-header">📈 FOB IMPACT ANALYSIS</div>
+    <table>
+      <tr>
+        <th width="40%">Component</th>
+        <th width="30%">Amount</th>
+        <th width="30%">Percentage</th>
+      </tr>
+      <tr>
+        <td class="label">Fabric Cost/Piece</td>
+        <td class="value">$${formatNumber(data.fobData.fabricCostPerPiece)}</td>
+        <td class="value">${formatNumber(data.fobData.fabricPercentageOfFOB)}% of FOB</td>
+      </tr>
+      <tr>
+        <td class="label">Other Costs/Piece</td>
+        <td class="value">$${formatNumber(data.fobData.otherCostsPerPiece)}</td>
+        <td></td>
+      </tr>
+      <tr class="highlight-row">
+        <td class="label">Total Cost/Piece</td>
+        <td class="value">$${formatNumber(data.fobData.totalCostPerPiece)}</td>
+        <td></td>
+      </tr>
+    </table>
 
-        // Key Results - Highlighted
-        ['', '📊 KEY RESULTS', '', ''],
-        ['', 'Metric', 'Value', 'Unit'],
-        ['', '▶ Actual Consumption/Piece', formatNumber(data.actualConsumptionPerPiece, 4), unit],
-        ['', '▶ Consumption/Dozen', formatNumber(data.consumptionPerDozen, 4), unit],
-        ['', '▶ Fabric Cost/Piece', `$${formatNumber(data.fabricCostPerPiece)}`, 'USD'],
-        ['', '▶ Total Fabric Required', formatNumber(data.totalFabricRequired), unit],
-        ['', '', '', ''],
+    <div class="section-header">✨ FINAL FOB</div>
+    <table>
+      <tr class="final-row">
+        <td width="40%">FOB Per Piece</td>
+        <td width="30%">$${formatNumber(data.fobData.fobPerPiece)}</td>
+        <td width="30%">@ ${data.profitMargin}% margin</td>
+      </tr>
+      <tr class="final-row">
+        <td>FOB Per Dozen</td>
+        <td>$${formatNumber(data.fobData.fobPerDozen)}</td>
+        <td></td>
+      </tr>
+    </table>`;
+  }
 
-        // Consumption Details
-        ['', '📦 CONSUMPTION SUMMARY', '', ''],
-        ['', 'Metric', 'Value', 'Unit'],
-        ['', 'Theoretical Consumption/pc', formatNumber(data.theoreticalConsumptionPerPiece, 4), unit],
-        ['', 'Actual Consumption/pc', formatNumber(data.actualConsumptionPerPiece, 4), unit],
-        ['', 'Consumption/Dozen', formatNumber(data.consumptionPerDozen, 4), unit],
-        ['', 'Waste/Piece', formatNumber(data.wastePerPiece, 4), unit],
-        ['', '', '', ''],
-
-        // Pattern Details
-        ['', '📐 PATTERN SPECIFICATIONS', '', ''],
-        ['', 'Parameter', 'Value', 'Unit'],
-        ['', 'Original Pattern Length', data.inputs?.patternLength, dimensionUnit],
-        ['', 'Original Pattern Width', data.inputs?.patternWidth, dimensionUnit],
-        ['', 'Adjusted Pattern Length', formatNumber(data.adjustedPatternLength), dimensionUnit],
-        ['', 'Adjusted Pattern Width', formatNumber(data.adjustedPatternWidth), dimensionUnit],
-        ['', 'Fabric Width', data.inputs?.fabricWidth, dimensionUnit],
-    ];
-
-    // Add garment-specific fields
-    if (data.garmentType === 'knit') {
-        wsData.push(['', 'GSM (Grams/Sq Meter)', data.inputs?.gsm, '']);
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #fff; }
+    .title { font-size: 20px; font-weight: bold; color: #28a745; text-align: center; margin-bottom: 5px; }
+    .subtitle { font-size: 14px; color: #666; text-align: center; margin-bottom: 20px; }
+    .section-header { 
+      background: #495057; 
+      color: white; 
+      font-size: 13px; 
+      font-weight: bold; 
+      padding: 8px 12px; 
+      margin-top: 15px; 
+      margin-bottom: 0;
+      border-radius: 4px 4px 0 0;
     }
-    if (data.garmentType === 'denim') {
-        wsData.push(['', 'Fabric Weight', data.inputs?.fabricWeight, 'oz/sq.yd']);
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin-bottom: 15px; 
+      font-size: 12px;
     }
-    if (data.patternsAcrossFabric) {
-        wsData.push(['', 'Patterns Across Width', data.patternsAcrossFabric, 'pieces']);
+    th { 
+      background: #28a745; 
+      color: white; 
+      padding: 10px 12px; 
+      text-align: left; 
+      font-size: 13px;
+      font-weight: bold;
+      border: 1px solid #1e7e34;
     }
-
-    wsData.push(
-        ['', '', '', ''],
-
-        // Efficiency Metrics
-        ['', '⚡ EFFICIENCY METRICS', '', ''],
-        ['', 'Metric', 'Value', 'Benchmark'],
-        ['', 'Marker Efficiency', `${data.markerEfficiency}%`, '75-85% typical'],
-        ['', 'Fabric Utilization', `${formatNumber(data.fabricUtilization)}%`, ''],
-        ['', 'Total Waste Percentage', `${formatNumber(data.wastePercentage)}%`, '<10% ideal'],
-        ['', '', '', ''],
-
-        // Allowances
-        ['', '📋 ALLOWANCES APPLIED', '', ''],
-        ['', 'Type', 'Length', 'Width'],
-        ['', 'Shrinkage', `${data.inputs?.shrinkageLength}%`, `${data.inputs?.shrinkageWidth}%`],
-        ['', 'Wastage Allowance', `${data.inputs?.wastage}%`, ''],
-        ['', '', '', ''],
-
-        // Order Requirements
-        ['', '📦 ORDER REQUIREMENTS', '', ''],
-        ['', 'Parameter', 'Value', 'Unit'],
-        ['', 'Order Quantity', data.orderQuantity?.toLocaleString(), 'pieces'],
-        ['', 'Total Fabric Required', formatNumber(data.totalFabricRequired), unit],
-        ['', 'Total Fabric (Meters)', formatNumber(data.totalFabricMeters), 'm'],
-        ['', 'Total Waste', formatNumber(data.totalWaste), unit],
-        ['', '', '', ''],
-
-        // Cost Breakdown
-        ['', '💰 COST ANALYSIS', '', ''],
-        ['', 'Item', 'Per Piece', 'Per Dozen'],
-        ['', 'Fabric Cost', `$${formatNumber(data.fabricCostPerPiece)}`, `$${formatNumber(data.fabricCostPerDozen)}`],
-        ['', '', '', ''],
-        ['', 'Fabric Price', `$${formatNumber(price)}${priceLabel}`, ''],
-        ['', 'Total Fabric Cost', `$${formatNumber(data.totalFabricCost)}`, '']
-    );
-
-    // Add FOB impact section if available
-    if (data.fobData) {
-        wsData.push(
-            ['', '', '', ''],
-            ['', '📈 FOB IMPACT ANALYSIS', '', ''],
-            ['', 'Component', 'Amount', 'Percentage'],
-            ['', 'Fabric Cost/Piece', `$${formatNumber(data.fobData.fabricCostPerPiece)}`, `${formatNumber(data.fobData.fabricPercentageOfFOB)}% of FOB`],
-            ['', 'Other Costs/Piece', `$${formatNumber(data.fobData.otherCostsPerPiece)}`, ''],
-            ['', 'Total Cost/Piece', `$${formatNumber(data.fobData.totalCostPerPiece)}`, ''],
-            ['', '', '', ''],
-            ['', '✨ FINAL FOB', '', ''],
-            ['', 'FOB Per Piece', `$${formatNumber(data.fobData.fobPerPiece)}`, `@ ${data.profitMargin}% margin`],
-            ['', 'FOB Per Dozen', `$${formatNumber(data.fobData.fobPerDozen)}`, '']
-        );
+    td { 
+      padding: 8px 12px; 
+      border: 1px solid #dee2e6; 
+      background: #fff;
     }
+    tr:nth-child(even) td { background: #f8f9fa; }
+    .label { font-weight: 500; color: #333; }
+    .value { color: #28a745; font-weight: 600; }
+    .highlight-row td { background: #d4edda !important; }
+    .final-row td { 
+      background: #28a745 !important; 
+      color: white !important; 
+      font-weight: bold; 
+      font-size: 13px;
+    }
+    .key-metric { background: #e8f5e9 !important; }
+    .key-metric .value { font-size: 14px; color: #1b5e20; }
+    .footer { 
+      text-align: center; 
+      font-size: 11px; 
+      color: #999; 
+      margin-top: 20px; 
+      padding-top: 10px;
+      border-top: 1px solid #eee;
+    }
+  </style>
+</head>
+<body>
+  <div class="title">🧵 MerchMate Fabric Analysis</div>
+  <div class="subtitle">Fabric Consumption & Marker Efficiency Report • ${generatedDate}</div>
 
-    wsData.push(
-        ['', '', '', ''],
-        ['', 'Generated by MerchMate - Your Garment Costing Partner', '', '']
-    );
+  <div class="section-header">📋 STYLE INFORMATION</div>
+  <table>
+    <tr><td class="label" width="40%">Style Name</td><td class="value" colspan="2">${data.styleName || 'N/A'}</td></tr>
+    <tr><td class="label">Buyer</td><td class="value" colspan="2">${data.buyerName || 'N/A'}</td></tr>
+    <tr><td class="label">Garment Type</td><td class="value" colspan="2">${getGarmentTypeLabel(data.garmentType)}</td></tr>
+  </table>
 
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
+  <div class="section-header">📊 KEY RESULTS</div>
+  <table>
+    <tr>
+      <th width="40%">Metric</th>
+      <th width="35%">Value</th>
+      <th width="25%">Unit</th>
+    </tr>
+    <tr class="key-metric">
+      <td class="label">▶ Actual Consumption/Piece</td>
+      <td class="value">${formatNumber(data.actualConsumptionPerPiece, 4)}</td>
+      <td>${unit}</td>
+    </tr>
+    <tr class="key-metric">
+      <td class="label">▶ Consumption/Dozen</td>
+      <td class="value">${formatNumber(data.consumptionPerDozen, 4)}</td>
+      <td>${unit}</td>
+    </tr>
+    <tr class="key-metric">
+      <td class="label">▶ Fabric Cost/Piece</td>
+      <td class="value">$${formatNumber(data.fabricCostPerPiece)}</td>
+      <td>USD</td>
+    </tr>
+    <tr class="key-metric">
+      <td class="label">▶ Total Fabric Required</td>
+      <td class="value">${formatNumber(data.totalFabricRequired)}</td>
+      <td>${unit}</td>
+    </tr>
+  </table>
 
-    // Set column widths
-    ws['!cols'] = [
-        { wch: 4 },   // Margin column
-        { wch: 30 },  // Labels
-        { wch: 24 },  // Values
-        { wch: 18 },  // Units/Notes
-    ];
+  <div class="section-header">📦 CONSUMPTION SUMMARY</div>
+  <table>
+    <tr>
+      <th width="40%">Metric</th>
+      <th width="35%">Value</th>
+      <th width="25%">Unit</th>
+    </tr>
+    <tr>
+      <td class="label">Theoretical Consumption/pc</td>
+      <td class="value">${formatNumber(data.theoreticalConsumptionPerPiece, 4)}</td>
+      <td>${unit}</td>
+    </tr>
+    <tr>
+      <td class="label">Actual Consumption/pc</td>
+      <td class="value">${formatNumber(data.actualConsumptionPerPiece, 4)}</td>
+      <td>${unit}</td>
+    </tr>
+    <tr>
+      <td class="label">Consumption/Dozen</td>
+      <td class="value">${formatNumber(data.consumptionPerDozen, 4)}</td>
+      <td>${unit}</td>
+    </tr>
+    <tr>
+      <td class="label">Waste/Piece</td>
+      <td class="value">${formatNumber(data.wastePerPiece, 4)}</td>
+      <td>${unit}</td>
+    </tr>
+  </table>
 
-    // Merge header cells
-    ws['!merges'] = [
-        { s: { r: 1, c: 1 }, e: { r: 1, c: 3 } }, // Title
-        { s: { r: 2, c: 1 }, e: { r: 2, c: 3 } }, // Subtitle
-    ];
+  <div class="section-header">📐 PATTERN SPECIFICATIONS</div>
+  <table>
+    <tr>
+      <th width="40%">Parameter</th>
+      <th width="35%">Value</th>
+      <th width="25%">Unit</th>
+    </tr>
+    <tr>
+      <td class="label">Original Pattern Length</td>
+      <td class="value">${data.inputs?.patternLength || 'N/A'}</td>
+      <td>${dimensionUnit}</td>
+    </tr>
+    <tr>
+      <td class="label">Original Pattern Width</td>
+      <td class="value">${data.inputs?.patternWidth || 'N/A'}</td>
+      <td>${dimensionUnit}</td>
+    </tr>
+    <tr>
+      <td class="label">Adjusted Pattern Length</td>
+      <td class="value">${formatNumber(data.adjustedPatternLength)}</td>
+      <td>${dimensionUnit}</td>
+    </tr>
+    <tr>
+      <td class="label">Adjusted Pattern Width</td>
+      <td class="value">${formatNumber(data.adjustedPatternWidth)}</td>
+      <td>${dimensionUnit}</td>
+    </tr>
+    <tr>
+      <td class="label">Fabric Width</td>
+      <td class="value">${data.inputs?.fabricWidth || 'N/A'}</td>
+      <td>${dimensionUnit}</td>
+    </tr>
+    ${garmentSpecificRows}
+  </table>
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Fabric Analysis');
+  <div class="section-header">⚡ EFFICIENCY METRICS</div>
+  <table>
+    <tr>
+      <th width="40%">Metric</th>
+      <th width="35%">Value</th>
+      <th width="25%">Benchmark</th>
+    </tr>
+    <tr class="highlight-row">
+      <td class="label">Marker Efficiency</td>
+      <td class="value">${data.markerEfficiency}%</td>
+      <td>75-85% typical</td>
+    </tr>
+    <tr>
+      <td class="label">Fabric Utilization</td>
+      <td class="value">${formatNumber(data.fabricUtilization)}%</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="label">Total Waste Percentage</td>
+      <td class="value" style="color: ${parseFloat(data.wastePercentage) > 10 ? '#dc3545' : '#28a745'};">${formatNumber(data.wastePercentage)}%</td>
+      <td>&lt;10% ideal</td>
+    </tr>
+  </table>
 
-    const b64 = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+  <div class="section-header">📋 ALLOWANCES APPLIED</div>
+  <table>
+    <tr>
+      <th width="40%">Type</th>
+      <th width="30%">Length</th>
+      <th width="30%">Width</th>
+    </tr>
+    <tr>
+      <td class="label">Shrinkage</td>
+      <td class="value">${data.inputs?.shrinkageLength || 0}%</td>
+      <td class="value">${data.inputs?.shrinkageWidth || 0}%</td>
+    </tr>
+    <tr>
+      <td class="label">Wastage Allowance</td>
+      <td class="value" colspan="2">${data.inputs?.wastage || 0}%</td>
+    </tr>
+  </table>
 
-    const safeStyle = String(data.styleName || 'analysis').replace(/[^a-z0-9_-]/gi, '_');
-    const fileName = `MerchMate_Fabric_${safeStyle}_${timestamp()}.xlsx`;
-    const fileUri = FileSystem.documentDirectory + fileName;
-    await FileSystem.writeAsStringAsync(fileUri, b64, { encoding: 'base64' });
-    return fileUri;
+  <div class="section-header">📦 ORDER REQUIREMENTS</div>
+  <table>
+    <tr>
+      <th width="40%">Parameter</th>
+      <th width="35%">Value</th>
+      <th width="25%">Unit</th>
+    </tr>
+    <tr>
+      <td class="label">Order Quantity</td>
+      <td class="value">${data.orderQuantity?.toLocaleString() || 'N/A'}</td>
+      <td>pieces</td>
+    </tr>
+    <tr>
+      <td class="label">Total Fabric Required</td>
+      <td class="value">${formatNumber(data.totalFabricRequired)}</td>
+      <td>${unit}</td>
+    </tr>
+    <tr>
+      <td class="label">Total Fabric (Meters)</td>
+      <td class="value">${formatNumber(data.totalFabricMeters)}</td>
+      <td>m</td>
+    </tr>
+    <tr>
+      <td class="label">Total Waste</td>
+      <td class="value">${formatNumber(data.totalWaste)}</td>
+      <td>${unit}</td>
+    </tr>
+  </table>
+
+  <div class="section-header">💰 COST ANALYSIS</div>
+  <table>
+    <tr>
+      <th width="40%">Item</th>
+      <th width="30%">Per Piece</th>
+      <th width="30%">Per Dozen</th>
+    </tr>
+    <tr class="highlight-row">
+      <td class="label">Fabric Cost</td>
+      <td class="value">$${formatNumber(data.fabricCostPerPiece)}</td>
+      <td class="value">$${formatNumber(data.fabricCostPerDozen)}</td>
+    </tr>
+    <tr>
+      <td class="label">Fabric Price</td>
+      <td class="value" colspan="2">$${formatNumber(price)}${priceLabel}</td>
+    </tr>
+    <tr class="final-row">
+      <td>Total Fabric Cost</td>
+      <td colspan="2">$${formatNumber(data.totalFabricCost)}</td>
+    </tr>
+  </table>
+
+  ${fobImpactSection}
+
+  <div class="footer">Generated by MerchMate - Your Garment Costing Partner</div>
+</body>
+</html>`;
+
+  const safeStyle = String(data.styleName || 'analysis').replace(/[^a-z0-9_-]/gi, '_');
+  const fileName = `MerchMate_Fabric_${safeStyle}_${timestamp()}.xls`;
+  const fileUri = FileSystem.documentDirectory + fileName;
+  await FileSystem.writeAsStringAsync(fileUri, htmlContent, { encoding: 'utf8' });
+  return fileUri;
 };
 
 /**
  * Generate and share Fabric Analysis as PDF
  */
 export const shareFabricAnalysisAsPDF = async (data) => {
-    const uri = await generateFabricAnalysisPDF(data);
-    await shareFile(uri);
+  const uri = await generateFabricAnalysisPDF(data);
+  await shareFile(uri);
 };
 
 /**
  * Generate Fabric Analysis PDF file
  */
 export const generateFabricAnalysisPDF = async (data) => {
-    const currency = (n) => `$${formatNumber(n)}`;
-    const unit = data.unit;
-    const priceLabel = unit === 'kg' ? '/kg' : '/yard';
-    const price = data.fabricPricePerKg || data.fabricPricePerYard;
-    const dimensionUnit = data.garmentType === 'knit' ? 'cm' : 'in';
+  const currency = (n) => `$${formatNumber(n)}`;
+  const unit = data.unit;
+  const priceLabel = unit === 'kg' ? '/kg' : '/yard';
+  const price = data.fabricPricePerKg || data.fabricPricePerYard;
+  const dimensionUnit = data.garmentType === 'knit' ? 'cm' : 'in';
 
-    const html = `
+  const html = `
     <html>
     <head>
       <meta charset="utf-8" />
@@ -1321,15 +1582,633 @@ export const generateFabricAnalysisPDF = async (data) => {
     </body>
     </html>`;
 
-    const { uri } = await Print.printToFileAsync({ html });
+  const { uri } = await Print.printToFileAsync({ html });
 
-    const safeStyle = String(data.styleName || 'analysis').replace(/[^a-z0-9_-]/gi, '_');
-    const fileName = `MerchMate_Fabric_${safeStyle}_${timestamp()}.pdf`;
-    const dest = FileSystem.documentDirectory + fileName;
-    try {
-        await FileSystem.moveAsync({ from: uri, to: dest });
-        return dest;
-    } catch {
-        return uri;
-    }
+  const safeStyle = String(data.styleName || 'analysis').replace(/[^a-z0-9_-]/gi, '_');
+  const fileName = `MerchMate_Fabric_${safeStyle}_${timestamp()}.pdf`;
+  const dest = FileSystem.documentDirectory + fileName;
+  try {
+    await FileSystem.moveAsync({ from: uri, to: dest });
+    return dest;
+  } catch {
+    return uri;
+  }
+};
+
+// ============================================================================
+// MARGIN ANALYSIS EXPORT FUNCTIONS
+// ============================================================================
+
+/**
+ * Build data structure for margin analysis exports
+ */
+export const buildMarginAnalysisData = (inputs, analysis, negotiationInsights) => {
+  return {
+    // Style info
+    styleName: inputs.styleName || 'N/A',
+    buyerName: inputs.buyerName || 'N/A',
+    currency: inputs.currency || 'USD',
+    incoterm: inputs.incoterm || 'FOB',
+
+    // Pricing
+    buyerTargetFob: analysis.inputs.buyerTargetFob,
+    quotedFob: analysis.inputs.quotedFob,
+    priceGap: analysis.priceGap,
+    priceGapPercent: analysis.priceGapPercent,
+
+    // Cost structure
+    totalCost: analysis.totalCost,
+    costBreakdown: analysis.costBreakdown,
+    topCostContributors: analysis.topCostContributors,
+    costDriver: analysis.costDriver,
+    flaggedCosts: analysis.flaggedCosts,
+
+    // Margin analysis
+    grossMargin: analysis.grossMargin,
+    marginPercent: analysis.marginPercent,
+    breakEvenFob: analysis.breakEvenFob,
+    targetFobWithProfit: analysis.targetFobWithProfit,
+    targetVariance: analysis.targetVariance,
+    isViable: analysis.isViable,
+    targetProfitPercent: analysis.inputs.targetProfitPercent,
+
+    // Order metrics
+    orderQuantity: analysis.inputs.orderQuantity,
+    orderSizeCategory: analysis.orderSizeCategory,
+    totalOrderValue: analysis.totalOrderValue,
+    totalProfit: analysis.totalProfit,
+
+    // Feasibility
+    feasibilityScore: analysis.feasibilityScore,
+
+    // Negotiation insights
+    negotiationInsights,
+
+    // Timestamp
+    timestamp: analysis.timestamp,
+  };
+};
+
+/**
+ * Generate styled Excel file for margin analysis using HTML table approach
+ */
+export const generateExcelMarginAnalysis = async (data) => {
+  const currency = data.currency || 'USD';
+  const symbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$';
+  const curr = (val) => `${symbol}${Number(val || 0).toFixed(2)}`;
+
+  // Determine status colors
+  const getStatusColor = () => {
+    if (data.feasibilityScore.status === 'Green') return '#28a745';
+    if (data.feasibilityScore.status === 'Amber') return '#ffc107';
+    return '#dc3545';
+  };
+
+  const getMarginColor = () => {
+    if (data.marginPercent >= 15) return '#28a745';
+    if (data.marginPercent >= 10) return '#ffc107';
+    return '#dc3545';
+  };
+
+  // Build cost rows HTML
+  let costRowsHtml = '';
+  Object.entries(data.costBreakdown).forEach(([key, comp]) => {
+    costRowsHtml += `
+      <tr>
+        <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;">${comp.emoji} ${comp.label}</td>
+        <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;text-align:right;">${curr(comp.value)}</td>
+        <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;text-align:right;">${comp.percent.toFixed(1)}%</td>
+      </tr>
+    `;
+  });
+
+  // Build flagged costs HTML
+  let alertsHtml = '';
+  if (data.flaggedCosts && data.flaggedCosts.length > 0) {
+    alertsHtml = `
+      <table style="width:100%;border-collapse:collapse;margin-top:20px;">
+        <tr>
+          <th colspan="2" style="background:#dc3545;color:white;padding:12px;font-size:14px;font-weight:bold;text-align:left;border:1px solid #dc3545;">
+            ⚠️ COST ALERTS
+          </th>
+        </tr>
+        ${data.flaggedCosts.map(flag => `
+          <tr>
+            <td colspan="2" style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;background:#fff5f5;color:#721c24;">
+              ⚠️ ${flag.warning}
+            </td>
+          </tr>
+        `).join('')}
+      </table>
+    `;
+  }
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Calibri, Arial, sans-serif; }
+    .header-cell { background-color: #6f42c1; color: white; font-weight: bold; }
+    .section-header { background-color: #495057; color: white; font-weight: bold; }
+    .table-header { background-color: #6f42c1; color: white; font-weight: bold; }
+    .total-row { background-color: #1a1a2e; color: white; font-weight: bold; }
+    .highlight-green { background-color: #d4edda; color: #155724; }
+    .highlight-amber { background-color: #fff3cd; color: #856404; }
+    .highlight-red { background-color: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <table style="width:100%;border-collapse:collapse;">
+    <tr>
+      <td colspan="3" style="background:#6f42c1;color:white;padding:20px;font-size:18px;font-weight:bold;text-align:center;border:none;">
+        MerchMate
+      </td>
+    </tr>
+    <tr>
+      <td colspan="3" style="background:#5a32a3;color:white;padding:16px;font-size:16px;font-weight:bold;text-align:center;border:none;">
+        MARGIN ANALYSIS REPORT
+      </td>
+    </tr>
+    <tr>
+      <td colspan="3" style="background:#f8f9fa;color:#666;padding:10px;font-size:11px;text-align:center;border:1px solid #dee2e6;">
+        Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+      </td>
+    </tr>
+  </table>
+
+  <br/>
+
+  <!-- Style Information -->
+  <table style="width:100%;border-collapse:collapse;">
+    <tr>
+      <th colspan="2" style="background:#495057;color:white;padding:12px;font-size:14px;font-weight:bold;text-align:left;border:1px solid #495057;">
+        📋 STYLE INFORMATION
+      </th>
+    </tr>
+    <tr>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;font-weight:bold;width:40%;background:#f8f9fa;">Style Name</td>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;">${data.styleName}</td>
+    </tr>
+    <tr>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;font-weight:bold;background:#f8f9fa;">Buyer</td>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;">${data.buyerName}</td>
+    </tr>
+    <tr>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;font-weight:bold;background:#f8f9fa;">Currency</td>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;">${data.currency}</td>
+    </tr>
+    <tr>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;font-weight:bold;background:#f8f9fa;">Incoterm</td>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;">${data.incoterm}</td>
+    </tr>
+  </table>
+
+  <br/>
+
+  <!-- Pricing Analysis -->
+  <table style="width:100%;border-collapse:collapse;">
+    <tr>
+      <th colspan="2" style="background:#495057;color:white;padding:12px;font-size:14px;font-weight:bold;text-align:left;border:1px solid #495057;">
+        💵 PRICING ANALYSIS
+      </th>
+    </tr>
+    <tr>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;font-weight:bold;width:40%;background:#f8f9fa;">Buyer Target FOB</td>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;">${curr(data.buyerTargetFob)}</td>
+    </tr>
+    <tr>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;font-weight:bold;background:#f8f9fa;">Your Quoted FOB</td>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;">${curr(data.quotedFob)}</td>
+    </tr>
+    <tr>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;font-weight:bold;background:#f8f9fa;">Price Gap</td>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;color:${data.priceGap >= 0 ? '#28a745' : '#dc3545'};font-weight:bold;">
+        ${data.priceGap >= 0 ? '+' : ''}${curr(data.priceGap)} (${data.priceGapPercent.toFixed(1)}%)
+      </td>
+    </tr>
+  </table>
+
+  <br/>
+
+  <!-- Cost Structure -->
+  <table style="width:100%;border-collapse:collapse;">
+    <tr>
+      <th colspan="3" style="background:#495057;color:white;padding:12px;font-size:14px;font-weight:bold;text-align:left;border:1px solid #495057;">
+        💰 COST STRUCTURE
+      </th>
+    </tr>
+    <tr>
+      <th style="background:#6f42c1;color:white;padding:12px;font-size:13px;font-weight:bold;text-align:left;border:1px solid #6f42c1;width:50%;">Component</th>
+      <th style="background:#6f42c1;color:white;padding:12px;font-size:13px;font-weight:bold;text-align:right;border:1px solid #6f42c1;width:25%;">Value</th>
+      <th style="background:#6f42c1;color:white;padding:12px;font-size:13px;font-weight:bold;text-align:right;border:1px solid #6f42c1;width:25%;">% of FOB</th>
+    </tr>
+    ${costRowsHtml}
+    <tr>
+      <td style="background:#1a1a2e;color:white;padding:12px;font-size:13px;font-weight:bold;border:1px solid #1a1a2e;">★ TOTAL COST</td>
+      <td style="background:#1a1a2e;color:white;padding:12px;font-size:13px;font-weight:bold;text-align:right;border:1px solid #1a1a2e;">${curr(data.totalCost)}</td>
+      <td style="background:#1a1a2e;color:white;padding:12px;font-size:13px;font-weight:bold;text-align:right;border:1px solid #1a1a2e;"></td>
+    </tr>
+  </table>
+
+  <br/>
+
+  <!-- Margin Analysis -->
+  <table style="width:100%;border-collapse:collapse;">
+    <tr>
+      <th colspan="2" style="background:#495057;color:white;padding:12px;font-size:14px;font-weight:bold;text-align:left;border:1px solid #495057;">
+        📈 MARGIN ANALYSIS
+      </th>
+    </tr>
+    <tr>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;font-weight:bold;width:40%;background:#f8f9fa;">Gross Margin</td>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;">${curr(data.grossMargin)}</td>
+    </tr>
+    <tr>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;font-weight:bold;background:#f8f9fa;">Margin %</td>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:14px;font-weight:bold;color:${getMarginColor()};">${data.marginPercent.toFixed(1)}%</td>
+    </tr>
+    <tr>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;font-weight:bold;background:#f8f9fa;">Break-even FOB</td>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;">${curr(data.breakEvenFob)}</td>
+    </tr>
+    <tr>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;font-weight:bold;background:#f8f9fa;">Target FOB (with profit)</td>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;">${curr(data.targetFobWithProfit)}</td>
+    </tr>
+    <tr>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;font-weight:bold;background:#f8f9fa;">Target Profit %</td>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;">${data.targetProfitPercent}%</td>
+    </tr>
+  </table>
+
+  <br/>
+
+  <!-- Feasibility Score -->
+  <table style="width:100%;border-collapse:collapse;">
+    <tr>
+      <th colspan="2" style="background:${getStatusColor()};color:white;padding:12px;font-size:14px;font-weight:bold;text-align:left;border:1px solid ${getStatusColor()};">
+        🎯 FEASIBILITY
+      </th>
+    </tr>
+    <tr>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;font-weight:bold;width:40%;background:#f8f9fa;">Score</td>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:16px;font-weight:bold;color:${getStatusColor()};">${data.feasibilityScore.score}/100</td>
+    </tr>
+    <tr>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;font-weight:bold;background:#f8f9fa;">Status</td>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:13px;font-weight:bold;color:${getStatusColor()};">${data.feasibilityScore.status}</td>
+    </tr>
+    <tr>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;font-weight:bold;background:#f8f9fa;">Recommendation</td>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;font-weight:bold;">${data.feasibilityScore.recommendation}</td>
+    </tr>
+  </table>
+
+  <br/>
+
+  <!-- Order Summary -->
+  <table style="width:100%;border-collapse:collapse;">
+    <tr>
+      <th colspan="3" style="background:#495057;color:white;padding:12px;font-size:14px;font-weight:bold;text-align:left;border:1px solid #495057;">
+        📦 ORDER SUMMARY
+      </th>
+    </tr>
+    <tr>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;font-weight:bold;width:40%;background:#f8f9fa;">Order Quantity</td>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;">${data.orderQuantity.toLocaleString()}</td>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;">pieces</td>
+    </tr>
+    <tr>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;font-weight:bold;background:#f8f9fa;">Order Size</td>
+      <td colspan="2" style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;">${data.orderSizeCategory}</td>
+    </tr>
+    <tr>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;font-weight:bold;background:#f8f9fa;">Total Order Value</td>
+      <td colspan="2" style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;">${symbol}${data.totalOrderValue.toLocaleString()}</td>
+    </tr>
+    <tr>
+      <td style="padding:10px 12px;border:1px solid #dee2e6;font-size:12px;font-weight:bold;background:#f8f9fa;">Expected Profit</td>
+      <td colspan="2" style="padding:10px 12px;border:1px solid #dee2e6;font-size:13px;font-weight:bold;color:${data.totalProfit >= 0 ? '#28a745' : '#dc3545'};">${symbol}${data.totalProfit.toLocaleString()}</td>
+    </tr>
+  </table>
+
+  ${alertsHtml}
+
+  <br/>
+
+  <!-- Footer -->
+  <table style="width:100%;border-collapse:collapse;margin-top:20px;">
+    <tr>
+      <td style="background:#f8f9fa;color:#666;padding:12px;font-size:10px;text-align:center;border:1px solid #dee2e6;">
+        Generated by MerchMate • Your Garment Costing Partner • ${new Date().toLocaleString()}
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+`;
+
+  // Write as .xls file (HTML-based Excel format which preserves styling)
+  const safeStyle = String(data.styleName).replace(/[^a-z0-9_-]/gi, '_');
+  const fileName = `MerchMate_Margin_${safeStyle}_${timestamp()}.xls`;
+  const fileUri = FileSystem.documentDirectory + fileName;
+  await FileSystem.writeAsStringAsync(fileUri, htmlContent, { encoding: FileSystem.EncodingType.UTF8 });
+  return fileUri;
+};
+
+/**
+ * Generate PDF report for margin analysis
+ */
+export const generatePdfMarginAnalysis = async (data) => {
+  const currency = data.currency || 'USD';
+  const symbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$';
+  const curr = (n) => `${symbol}${Number(n || 0).toFixed(2)}`;
+
+  // Determine status colors
+  const getStatusColor = () => {
+    if (data.feasibilityScore.status === 'Green') return '#28a745';
+    if (data.feasibilityScore.status === 'Amber') return '#ffc107';
+    return '#dc3545';
+  };
+
+  const getMarginColor = () => {
+    if (data.marginPercent >= 15) return '#28a745';
+    if (data.marginPercent >= 10) return '#ffc107';
+    return '#dc3545';
+  };
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #fff;
+            color: #1a1a2e;
+            padding: 0;
+            line-height: 1.4;
+        }
+        .page { max-width: 600px; margin: 0 auto; padding: 24px; }
+        .header {
+            background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+            color: white;
+            padding: 28px 24px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .brand { font-size: 14px; font-weight: 600; opacity: 0.9; margin-bottom: 4px; }
+        .title { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+        .style-info { font-size: 16px; font-weight: 600; margin-top: 8px; }
+        .buyer-info { font-size: 13px; opacity: 0.85; }
+        
+        .score-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-left: 5px solid ${getStatusColor()};
+            display: flex;
+            align-items: center;
+        }
+        .score-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 5px solid ${getStatusColor()};
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+        }
+        .score-value { font-size: 28px; font-weight: 800; color: ${getStatusColor()}; }
+        .score-max { font-size: 11px; color: #888; }
+        .score-info { flex: 1; }
+        .score-status {
+            display: inline-block;
+            background: ${getStatusColor()};
+            color: white;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .score-recommendation { font-size: 18px; font-weight: 700; color: #1a1a2e; }
+        .score-justification { font-size: 13px; color: #666; margin-top: 8px; }
+        
+        .hero-card {
+            background: #1a1a2e;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        .hero-label { font-size: 11px; font-weight: 700; color: #888; letter-spacing: 1px; }
+        .hero-value { font-size: 48px; font-weight: 800; color: ${getMarginColor()}; }
+        .hero-sub { font-size: 14px; color: #aaa; margin-top: 4px; }
+        
+        .section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        table { width: 100%; border-collapse: collapse; }
+        td, th { padding: 8px 0; font-size: 13px; }
+        td:first-child { color: #666; }
+        td:last-child { text-align: right; font-weight: 600; color: #1a1a2e; }
+        .highlight-row { background: #f8f9fa; }
+        .highlight-value { color: #007bff !important; }
+        
+        .price-grid { display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .price-item { text-align: center; flex: 1; }
+        .price-label { font-size: 11px; color: #888; }
+        .price-value { font-size: 18px; font-weight: 700; color: #1a1a2e; }
+        .price-positive { color: #28a745; }
+        .price-negative { color: #dc3545; }
+        
+        .cost-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .cost-label { font-size: 13px; color: #333; }
+        .cost-values { text-align: right; }
+        .cost-value { font-size: 14px; font-weight: 600; color: #1a1a2e; }
+        .cost-percent { font-size: 11px; color: #888; background: #f0f0f0; padding: 2px 6px; border-radius: 4px; }
+        .cost-critical { background: #dc3545; color: #fff; }
+        .cost-high { background: #fd7e14; color: #fff; }
+        
+        .alert-box {
+            background: #f8d7da;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+        }
+        .alert-title { font-size: 12px; font-weight: 700; color: #721c24; margin-bottom: 6px; }
+        .alert-text { font-size: 12px; color: #721c24; }
+        
+        .action-box {
+            background: ${getStatusColor()}15;
+            border-left: 4px solid ${getStatusColor()};
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 16px;
+        }
+        .action-label { font-size: 11px; font-weight: 700; color: #888; letter-spacing: 0.5px; }
+        .action-text { font-size: 14px; font-weight: 600; color: ${getStatusColor()}; margin-top: 4px; }
+        
+        .footer {
+            text-align: center;
+            font-size: 11px;
+            color: #aaa;
+            padding: 16px 0;
+            border-top: 1px solid #f0f0f0;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="header">
+            <div class="brand">MerchMate</div>
+            <div class="title">MARGIN ANALYSIS REPORT</div>
+            <div class="style-info">${data.styleName}</div>
+            <div class="buyer-info">${data.buyerName} • ${data.incoterm} • ${data.currency}</div>
+        </div>
+
+        <div class="score-card">
+            <div class="score-circle">
+                <span class="score-value">${data.feasibilityScore.score}</span>
+                <span class="score-max">/100</span>
+            </div>
+            <div class="score-info">
+                <span class="score-status">${data.feasibilityScore.status}</span>
+                <div class="score-recommendation">${data.feasibilityScore.recommendation}</div>
+                <div class="score-justification">${data.feasibilityScore.justification}</div>
+            </div>
+        </div>
+
+        <div class="hero-card">
+            <div class="hero-label">GROSS MARGIN</div>
+            <div class="hero-value">${data.marginPercent.toFixed(1)}%</div>
+            <div class="hero-sub">${curr(data.grossMargin)} per piece</div>
+        </div>
+
+        <div class="action-box">
+            <div class="action-label">COMMERCIAL RECOMMENDATION</div>
+            <div class="action-text">${data.negotiationInsights.commercialAction}</div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">💵 Price Analysis</div>
+            <div class="price-grid">
+                <div class="price-item">
+                    <div class="price-label">Buyer Target</div>
+                    <div class="price-value">${curr(data.buyerTargetFob)}</div>
+                </div>
+                <div class="price-item">
+                    <div class="price-label">Your Quote</div>
+                    <div class="price-value">${curr(data.quotedFob)}</div>
+                </div>
+                <div class="price-item">
+                    <div class="price-label">Price Gap</div>
+                    <div class="price-value ${data.priceGap >= 0 ? 'price-positive' : 'price-negative'}">
+                        ${data.priceGap >= 0 ? '+' : ''}${curr(data.priceGap)}
+                    </div>
+                </div>
+            </div>
+            <table>
+                <tr><td>Break-even FOB</td><td>${curr(data.breakEvenFob)}</td></tr>
+                <tr><td>Target FOB (at ${data.targetProfitPercent}% profit)</td><td>${curr(data.targetFobWithProfit)}</td></tr>
+                <tr><td>Variance from Buyer Target</td><td style="color: ${data.isViable ? '#28a745' : '#dc3545'}">${data.isViable ? '+' : ''}${curr(data.targetVariance)}</td></tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <div class="section-title">📋 Cost Breakdown (${data.costDriver} Product)</div>
+            ${Object.entries(data.costBreakdown).map(([key, comp]) => `
+                <div class="cost-item">
+                    <span class="cost-label">${comp.emoji} ${comp.label}</span>
+                    <div class="cost-values">
+                        <span class="cost-value">${curr(comp.value)}</span>
+                        <span class="cost-percent ${comp.status === 'critical' ? 'cost-critical' : comp.status === 'high' ? 'cost-high' : ''}">${comp.percent.toFixed(1)}%</span>
+                    </div>
+                </div>
+            `).join('')}
+            <div class="cost-item" style="border-top: 2px solid #1a1a2e; padding-top: 12px;">
+                <span class="cost-label" style="font-weight: 700;">★ TOTAL COST</span>
+                <span class="cost-value" style="font-size: 18px;">${curr(data.totalCost)}</span>
+            </div>
+            ${data.flaggedCosts && data.flaggedCosts.length > 0 ? `
+                <div class="alert-box">
+                    <div class="alert-title">⚠️ Cost Alerts</div>
+                    ${data.flaggedCosts.map(flag => `<div class="alert-text">• ${flag.warning}</div>`).join('')}
+                </div>
+            ` : ''}
+        </div>
+
+        <div class="section">
+            <div class="section-title">📦 Order Summary</div>
+            <table>
+                <tr><td>Order Quantity</td><td>${data.orderQuantity.toLocaleString()} pieces</td></tr>
+                <tr><td>Order Category</td><td>${data.orderSizeCategory}</td></tr>
+                <tr><td>Total Order Value</td><td>${curr(data.totalOrderValue)}</td></tr>
+                <tr class="highlight-row"><td>Expected Total Profit</td><td class="highlight-value">${curr(data.totalProfit)}</td></tr>
+            </table>
+        </div>
+
+        ${data.negotiationInsights.negotiationLevers && data.negotiationInsights.negotiationLevers.length > 0 ? `
+        <div class="section">
+            <div class="section-title">🔧 Negotiation Levers</div>
+            ${data.negotiationInsights.negotiationLevers.map(lever => `
+                <div style="margin-bottom: 12px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                    <div style="font-weight: 700; font-size: 13px; color: #1a1a2e;">${lever.lever}</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 4px;">${lever.description}</div>
+                    <div style="font-size: 11px; color: #007bff; font-weight: 600; margin-top: 4px;">Target: ${lever.targetImprovement}</div>
+                </div>
+            `).join('')}
+        </div>
+        ` : ''}
+
+        <div class="footer">
+            Generated by MerchMate • Buyer-Centric Margin Analyzer • ${new Date().toLocaleString()}
+        </div>
+    </div>
+</body>
+</html>`;
+
+  const { uri } = await Print.printToFileAsync({ html });
+
+  const safeStyle = String(data.styleName || 'analysis').replace(/[^a-z0-9_-]/gi, '_');
+  const fileName = `MerchMate_Margin_${safeStyle}_${timestamp()}.pdf`;
+  const dest = FileSystem.documentDirectory + fileName;
+  try {
+    await FileSystem.moveAsync({ from: uri, to: dest });
+    return dest;
+  } catch {
+    return uri;
+  }
 };

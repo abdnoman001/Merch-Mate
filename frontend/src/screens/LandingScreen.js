@@ -86,6 +86,18 @@ export default function LandingScreen({ navigation }) {
                         <View style={[styles.cardArrow, styles.fabricArrow]}><Text style={styles.arrowText}>→</Text></View>
                     </TouchableOpacity>
 
+                    {/* Margin Analyzer Card */}
+                    <TouchableOpacity style={[styles.card, styles.marginCard]} onPress={() => navigation.navigate('BuyerAnalyzerInput')} activeOpacity={0.85}>
+                        <View style={[styles.cardIconContainer, styles.marginIconContainer]}>
+                            <Text style={styles.cardIcon}>📊</Text>
+                        </View>
+                        <View style={styles.cardContent}>
+                            <Text style={styles.cardTitle}>Margin Analyzer</Text>
+                            <Text style={styles.cardDescription}>Buyer pricing & margin viability analysis</Text>
+                        </View>
+                        <View style={[styles.cardArrow, styles.marginArrow]}><Text style={styles.arrowText}>→</Text></View>
+                    </TouchableOpacity>
+
                     {/* History Card */}
                     <TouchableOpacity style={[styles.card, styles.historyCard]} onPress={() => navigation.navigate('History')} activeOpacity={0.85}>
                         <View style={[styles.cardIconContainer, styles.historyIconContainer]}>
@@ -129,9 +141,11 @@ const styles = StyleSheet.create({
     cardsContainer: { paddingHorizontal: 16 },
     card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2, borderLeftWidth: 4, borderLeftColor: '#007bff' },
     fabricCard: { borderLeftColor: '#28a745' },
+    marginCard: { borderLeftColor: '#6f42c1' },
     historyCard: { borderLeftColor: '#6c757d' },
     cardIconContainer: { width: 52, height: 52, borderRadius: 14, backgroundColor: '#007bff15', alignItems: 'center', justifyContent: 'center', marginRight: 14 },
     fabricIconContainer: { backgroundColor: '#28a74515' },
+    marginIconContainer: { backgroundColor: '#6f42c115' },
     historyIconContainer: { backgroundColor: '#6c757d15' },
     cardIcon: { fontSize: 26 },
     cardContent: { flex: 1 },
@@ -139,6 +153,7 @@ const styles = StyleSheet.create({
     cardDescription: { fontSize: 13, color: '#777', lineHeight: 18 },
     cardArrow: { width: 36, height: 36, borderRadius: 12, backgroundColor: '#007bff', alignItems: 'center', justifyContent: 'center' },
     fabricArrow: { backgroundColor: '#28a745' },
+    marginArrow: { backgroundColor: '#6f42c1' },
     historyArrow: { backgroundColor: '#6c757d' },
     arrowText: { color: '#fff', fontSize: 18, fontWeight: '700' },
     footer: { alignItems: 'center', paddingVertical: 20, paddingBottom: 32 },

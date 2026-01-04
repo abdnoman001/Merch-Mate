@@ -5,8 +5,13 @@ import { clearAllHistory, deleteCostSheet, deleteMultipleCostSheets, getCostShee
 
 const FABRIC_ANALYSIS_STORAGE_KEY = '@fabric_analysis_history';
 
-const HistoryScreen = ({ navigation }) => {
-    const [activeTab, setActiveTab] = useState('fob');
+const HistoryScreen = ({ navigation, route }) => {
+    // Check if we're in import mode (selecting to return data to another screen)
+    const returnTo = route?.params?.returnTo;
+    const importType = route?.params?.type;
+    const isImportMode = !!returnTo;
+
+    const [activeTab, setActiveTab] = useState(importType === 'fabric' ? 'fabric' : 'fob');
     const [fobHistory, setFobHistory] = useState([]);
     const [fabricHistory, setFabricHistory] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -97,14 +102,35 @@ const HistoryScreen = ({ navigation }) => {
     const toggleSelection = (id) => setSelectedItems(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
     const getGarmentIcon = (type) => ({ knit: '👕', woven: '👔', denim: '👖' }[type] || '🧵');
 
+    // Handle item selection for import mode
+    const handleImportSelect = (item) => {
+        if (returnTo === 'BuyerAnalyzerInput') {
+            // Pass FOB data back to Buyer Analyzer
+            navigation.navigate('BuyerAnalyzerInput', { fobData: item });
+        }
+    };
+
     const renderFobItem = ({ item }) => {
         const isSelected = selectedItems.includes(item.id);
         const fobPerPc = (item.breakdown.final_fob_per_doz || (item.breakdown.final_fob_per_pc * 12)) / 12;
+
+        // Handle press based on mode
+        const handlePress = () => {
+            if (isImportMode) {
+                handleImportSelect(item);
+            } else if (selectionMode) {
+                toggleSelection(item.id);
+            } else {
+                navigation.navigate('Result', { breakdown: item.breakdown, inputs: item.inputs });
+            }
+        };
+
         return (
-            <TouchableOpacity style={[styles.card, isSelected && styles.selectedCard]}
-                onPress={() => selectionMode ? toggleSelection(item.id) : navigation.navigate('Result', { breakdown: item.breakdown, inputs: item.inputs })}
-                onLongPress={() => { setSelectionMode(true); toggleSelection(item.id); }} activeOpacity={0.7}>
-                {selectionMode && <View style={styles.checkboxContainer}><View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>{isSelected && <Text style={styles.checkmark}>✓</Text>}</View></View>}
+            <TouchableOpacity style={[styles.card, isSelected && styles.selectedCard, isImportMode && styles.importModeCard]}
+                onPress={handlePress}
+                onLongPress={() => !isImportMode && (setSelectionMode(true), toggleSelection(item.id))} activeOpacity={0.7}>
+                {selectionMode && !isImportMode && <View style={styles.checkboxContainer}><View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>{isSelected && <Text style={styles.checkmark}>✓</Text>}</View></View>}
+                {isImportMode && <View style={styles.importIndicator}><Text style={styles.importIndicatorText}>Tap to Import</Text></View>}
                 <View style={styles.cardContent}>
                     <View style={styles.cardHeader}>
                         <View style={styles.cardLeft}><View style={styles.iconContainer}><Text style={styles.cardIcon}>📝</Text></View></View>
@@ -121,7 +147,7 @@ const HistoryScreen = ({ navigation }) => {
                     </View>
                     <View style={styles.cardFooter}>
                         <Text style={styles.timestamp}>{formatDate(item.timestamp)}</Text>
-                        {!selectionMode && <View style={styles.actionRow}>
+                        {!selectionMode && !isImportMode && <View style={styles.actionRow}>
                             <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('Input', { editData: item })}><Text style={styles.actionIcon}>✏️</Text></TouchableOpacity>
                             <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={() => handleDeleteFob(item.id)}><Text style={styles.actionIcon}>🗑️</Text></TouchableOpacity>
                         </View>}
@@ -168,17 +194,28 @@ const HistoryScreen = ({ navigation }) => {
         <View style={styles.emptyContainer}>
             <View style={[styles.emptyIcon, activeTab === 'fabric' && styles.fabricEmptyIcon]}><Text style={styles.emptyIconText}>{activeTab === 'fob' ? '📝' : '🧵'}</Text></View>
             <Text style={styles.emptyTitle}>No {activeTab === 'fob' ? 'Cost Sheets' : 'Analyses'} Yet</Text>
-            <Text style={styles.emptySubtitle}>{activeTab === 'fob' ? 'Create your first FOB cost sheet' : 'Run a fabric analysis and save it'}</Text>
-            <TouchableOpacity style={[styles.emptyButton, activeTab === 'fabric' && styles.fabricEmptyButton]} onPress={() => navigation.navigate(activeTab === 'fob' ? 'Input' : 'FabricAnalyzerInput')}>
+            <Text style={styles.emptySubtitle}>{isImportMode ? 'Create a cost sheet first to import' : (activeTab === 'fob' ? 'Create your first FOB cost sheet' : 'Run a fabric analysis and save it')}</Text>
+            {!isImportMode && <TouchableOpacity style={[styles.emptyButton, activeTab === 'fabric' && styles.fabricEmptyButton]} onPress={() => navigation.navigate(activeTab === 'fob' ? 'Input' : 'FabricAnalyzerInput')}>
                 <Text style={styles.emptyButtonText}>{activeTab === 'fob' ? '+ Create Sheet' : '+ New Analysis'}</Text>
-            </TouchableOpacity>
+            </TouchableOpacity>}
         </View>
     );
 
     return (
         <View style={styles.container}>
-            <View style={styles.header}><Text style={styles.headerTitle}>History</Text><Text style={styles.headerSubtitle}>{fobHistory.length + fabricHistory.length} saved items</Text></View>
-            <View style={styles.tabContainer}>
+            {isImportMode && (
+                <View style={styles.importBanner}>
+                    <Text style={styles.importBannerText}>📥 Select a FOB Sheet to Import</Text>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.cancelImportBtn}>
+                        <Text style={styles.cancelImportText}>Cancel</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+            <View style={styles.header}>
+                <Text style={styles.headerTitle}>{isImportMode ? 'Select FOB Sheet' : 'History'}</Text>
+                <Text style={styles.headerSubtitle}>{isImportMode ? 'Tap a sheet to import its data' : `${fobHistory.length + fabricHistory.length} saved items`}</Text>
+            </View>
+            {!isImportMode && <View style={styles.tabContainer}>
                 <TouchableOpacity style={[styles.tab, activeTab === 'fob' && styles.tabActive]} onPress={() => { setActiveTab('fob'); setSelectionMode(false); setSelectedItems([]); }}>
                     <Text style={styles.tabIcon}>📝</Text><Text style={[styles.tabText, activeTab === 'fob' && styles.tabTextActive]}>FOB Costing</Text>
                     {fobHistory.length > 0 && <View style={[styles.tabBadge, activeTab === 'fob' && styles.tabBadgeActive]}><Text style={[styles.tabBadgeText, activeTab === 'fob' && styles.tabBadgeTextActive]}>{fobHistory.length}</Text></View>}
@@ -187,8 +224,8 @@ const HistoryScreen = ({ navigation }) => {
                     <Text style={styles.tabIcon}>🧵</Text><Text style={[styles.tabText, activeTab === 'fabric' && styles.fabricTabTextActive]}>Fabric Analysis</Text>
                     {fabricHistory.length > 0 && <View style={[styles.tabBadge, activeTab === 'fabric' && styles.fabricTabBadgeActive]}><Text style={[styles.tabBadgeText, activeTab === 'fabric' && styles.fabricTabBadgeTextActive]}>{fabricHistory.length}</Text></View>}
                 </TouchableOpacity>
-            </View>
-            {history.length > 0 && <View style={styles.toolbar}>
+            </View>}
+            {history.length > 0 && !isImportMode && <View style={styles.toolbar}>
                 {selectionMode ? <>
                     <TouchableOpacity style={styles.toolbarBtn} onPress={() => { setSelectionMode(false); setSelectedItems([]); }}><Text style={styles.toolbarBtnText}>✕ Cancel</Text></TouchableOpacity>
                     <TouchableOpacity style={[styles.toolbarBtn, styles.toolbarDeleteBtn]} onPress={handleDeleteSelected}><Text style={styles.toolbarBtnTextWhite}>🗑️ Delete ({selectedItems.length})</Text></TouchableOpacity>
@@ -199,7 +236,7 @@ const HistoryScreen = ({ navigation }) => {
             </View>}
             {loading ? <View style={styles.loadingContainer}><Text style={styles.loadingText}>Loading...</Text></View>
                 : history.length === 0 ? renderEmptyState()
-                    : <FlatList data={history} renderItem={activeTab === 'fob' ? renderFobItem : renderFabricItem} keyExtractor={(item) => item.id} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} />}
+                    : <FlatList data={isImportMode ? fobHistory : history} renderItem={activeTab === 'fob' || isImportMode ? renderFobItem : renderFabricItem} keyExtractor={(item) => item.id} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} />}
         </View>
     );
 };
@@ -279,6 +316,14 @@ const styles = StyleSheet.create({
     emptyButton: { backgroundColor: '#007bff', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 12 },
     fabricEmptyButton: { backgroundColor: '#28a745' },
     emptyButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+    // Import mode styles
+    importBanner: { backgroundColor: '#9c27b0', paddingHorizontal: 20, paddingVertical: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    importBannerText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+    cancelImportBtn: { backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 14, paddingVertical: 6, borderRadius: 8 },
+    cancelImportText: { color: '#fff', fontWeight: '600', fontSize: 13 },
+    importModeCard: { borderLeftColor: '#9c27b0', borderWidth: 1, borderColor: '#9c27b015' },
+    importIndicator: { position: 'absolute', top: 0, right: 0, backgroundColor: '#9c27b0', paddingHorizontal: 10, paddingVertical: 4, borderBottomLeftRadius: 10 },
+    importIndicatorText: { color: '#fff', fontSize: 10, fontWeight: '700' },
 });
 
 export default HistoryScreen;
