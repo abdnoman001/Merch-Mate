@@ -1,51 +1,56 @@
-## MerchMate v1.1.0 - Professional Export Features 📊
+## MerchMate v1.0.5 - Buyer Margin Analyzer & Styled Exports 📊
 
-### New Features
+### 🆕 New Features
 
-#### 🟢 Excel Export
-Generate professional `.xlsx` files with:
-- Color-coded headers and sections
-- Formatted currency values
-- Organized cost breakdown tables
-- Highlighted final FOB price
+#### 🎯 Buyer-Centric Margin Analyzer
+Analyze buyer price targets and profit feasibility:
+- **Target Price Analysis** - Enter buyer's target FOB
+- **Feasibility Score** - Go/Caution/No-Go indicators
+- **FOB Import** - Pull existing costing data from history
+- **Margin Visualization** - Profit vs cost breakdown
+- **Two-Tab Results** - Margin analysis + Cost breakdown
 
-#### 🔴 PDF Export
-Create receipt-style PDF documents with:
-- MerchMate branding
-- Complete cost breakdown
-- Buyer and style information
-- Professional table layout
+#### 📈 Professional Styled Excel Exports
+All Excel exports now beautifully formatted:
+- **FOB Costing** - Blue theme with professional tables
+- **Fabric Analysis** - Green theme with efficiency metrics
+- **Margin Analysis** - Purple theme with feasibility badges
+- Color-coded headers, visible borders, font hierarchy
+- Alternating row colors, highlighted summaries
 
-#### 🔵 Enhanced Sharing
-Three export options on Result Screen:
-- **Share Excel** - Detailed spreadsheet
-- **Share/Download PDF** - Professional receipt
-- **Share Quote** - Quick text summary
+### ✨ Improvements
+- ✅ Streamlined UI - Removed feature bloat
+- ✅ FOB history import for quick analysis
+- ✅ Better export formatting across all modules
+- ✅ Cleaner navigation flow
 
-### Improvements
-- ✅ Buyer information in all export formats
-- ✅ Improved input field alignment
-- ✅ Better error handling
-
-### Dependencies
-```json
-"expo-print": "^13.0.0",
-"expo-sharing": "^13.0.0",
-"xlsx": "^0.18.5"
+### 🔧 Technical Changes
+```
++ BuyerAnalyzerInputScreen.js
++ BuyerAnalyzerResultScreen.js
++ marginAnalyzer.js
+~ exporters.js (styled HTML exports)
+~ App.js (new routes)
+~ LandingScreen.js (new card)
+~ HistoryScreen.js (import mode)
+- ScenarioSimulatorScreen.js (removed)
 ```
 
-### Installation
-Download the APK from the build link or install via:
+### 📊 Feasibility Ratings
+| Score | Status | Action |
+|-------|--------|--------|
+| 70-100 | ✅ Excellent | Go ahead |
+| 40-69 | ⚠️ Acceptable | Review costs |
+| 0-39 | ❌ Not Viable | Renegotiate |
+
+### 📲 Installation
 ```bash
+cd frontend
 npm install
-npx expo install expo-print expo-sharing
-npm install xlsx
+npx expo start
 ```
 
-### Changes
-- Added `frontend/src/utils/exporters.js` - Export utilities
-- Updated `frontend/src/screens/ResultScreen.js` - New share buttons
-- Updated `frontend/package.json` - New dependencies
-- Updated `README.md` - Documentation
+**APK Build**: [Download from EAS](https://expo.dev/accounts/shahriartamim2/projects/merchmate/builds/)
 
-**APK Build**: https://expo.dev/accounts/shahriartamim2/projects/merchmate/builds/5d2bae18-e75e-4ac7-88a4-c0af40b4d531
+---
+**Full Changelog**: v1.0.4...v1.0.5
