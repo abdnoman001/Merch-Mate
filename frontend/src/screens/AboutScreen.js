@@ -1,4 +1,5 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { APP_VERSION } from '../utils/versionConfig';
 
 export default function AboutScreen() {
     return (
@@ -9,7 +10,7 @@ export default function AboutScreen() {
                     <Text style={styles.appIcon}>📐</Text>
                 </View>
                 <Text style={styles.appName}>MerchMate</Text>
-                <Text style={styles.version}>Version 1.0.4</Text>
+                <Text style={styles.version}>Version {APP_VERSION}</Text>
                 <Text style={styles.tagline}>Professional Garment Costing Suite</Text>
             </View>
 

@@ -1,11 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
 import { clearAllHistory, deleteCostSheet, deleteMultipleCostSheets, getCostSheetHistory } from '../utils/calculations';
 
 const FABRIC_ANALYSIS_STORAGE_KEY = '@fabric_analysis_history';
 
 const HistoryScreen = ({ navigation, route }) => {
+    const { colors } = useTheme();
     // Check if we're in import mode (selecting to return data to another screen)
     const returnTo = route?.params?.returnTo;
     const importType = route?.params?.type;
@@ -126,29 +128,29 @@ const HistoryScreen = ({ navigation, route }) => {
         };
 
         return (
-            <TouchableOpacity style={[styles.card, isSelected && styles.selectedCard, isImportMode && styles.importModeCard]}
+            <TouchableOpacity style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }, isSelected && styles.selectedCard, isImportMode && styles.importModeCard]}
                 onPress={handlePress}
                 onLongPress={() => !isImportMode && (setSelectionMode(true), toggleSelection(item.id))} activeOpacity={0.7}>
                 {selectionMode && !isImportMode && <View style={styles.checkboxContainer}><View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>{isSelected && <Text style={styles.checkmark}>✓</Text>}</View></View>}
                 {isImportMode && <View style={styles.importIndicator}><Text style={styles.importIndicatorText}>Tap to Import</Text></View>}
                 <View style={styles.cardContent}>
                     <View style={styles.cardHeader}>
-                        <View style={styles.cardLeft}><View style={styles.iconContainer}><Text style={styles.cardIcon}>📝</Text></View></View>
+                        <View style={styles.cardLeft}><View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}><Text style={styles.cardIcon}>📝</Text></View></View>
                         <View style={styles.cardInfo}>
-                            <Text style={styles.cardTitle} numberOfLines={1}>{item.inputs.style_name || 'Untitled'}</Text>
-                            <Text style={styles.cardSubtitle}>{item.inputs.buyer_name || 'No buyer'}</Text>
+                            <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={1}>{item.inputs.style_name || 'Untitled'}</Text>
+                            <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>{item.inputs.buyer_name || 'No buyer'}</Text>
                         </View>
-                        <View style={styles.priceContainer}><Text style={styles.priceLabel}>FOB</Text><Text style={styles.priceValueLarge}>${fobPerPc.toFixed(2)}</Text><Text style={styles.priceUnit}>/pc</Text></View>
+                        <View style={styles.priceContainer}><Text style={[styles.priceLabel, { color: colors.textSecondary }]}>FOB</Text><Text style={[styles.priceValueLarge, { color: colors.primary }]}>${fobPerPc.toFixed(2)}</Text><Text style={[styles.priceUnit, { color: colors.textSecondary }]}>/pc</Text></View>
                     </View>
-                    <View style={styles.cardMeta}>
-                        <View style={styles.metaItem}><Text style={styles.metaLabel}>Fabric</Text><Text style={styles.metaValue}>{item.inputs.fabric_type} {item.inputs.gsm}g</Text></View>
-                        <View style={styles.metaDivider} />
-                        <View style={styles.metaItem}><Text style={styles.metaLabel}>Consumption</Text><Text style={styles.metaValue}>{item.breakdown.total_fabric_req_kg_doz} kg/dz</Text></View>
+                    <View style={[styles.cardMeta, { backgroundColor: colors.background }]}>
+                        <View style={styles.metaItem}><Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Fabric</Text><Text style={[styles.metaValue, { color: colors.text }]}>{item.inputs.fabric_type} {item.inputs.gsm}g</Text></View>
+                        <View style={[styles.metaDivider, { backgroundColor: colors.border }]} />
+                        <View style={styles.metaItem}><Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Consumption</Text><Text style={[styles.metaValue, { color: colors.text }]}>{item.breakdown.total_fabric_req_kg_doz} kg/dz</Text></View>
                     </View>
                     <View style={styles.cardFooter}>
-                        <Text style={styles.timestamp}>{formatDate(item.timestamp)}</Text>
+                        <Text style={[styles.timestamp, { color: colors.textSecondary }]}>{formatDate(item.timestamp)}</Text>
                         {!selectionMode && !isImportMode && <View style={styles.actionRow}>
-                            <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('Input', { editData: item })}><Text style={styles.actionIcon}>✏️</Text></TouchableOpacity>
+                            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.background }]} onPress={() => navigation.navigate('Input', { editData: item })}><Text style={styles.actionIcon}>✏️</Text></TouchableOpacity>
                             <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={() => handleDeleteFob(item.id)}><Text style={styles.actionIcon}>🗑️</Text></TouchableOpacity>
                         </View>}
                     </View>
@@ -192,9 +194,9 @@ const HistoryScreen = ({ navigation, route }) => {
 
     const renderEmptyState = () => (
         <View style={styles.emptyContainer}>
-            <View style={[styles.emptyIcon, activeTab === 'fabric' && styles.fabricEmptyIcon]}><Text style={styles.emptyIconText}>{activeTab === 'fob' ? '📝' : '🧵'}</Text></View>
-            <Text style={styles.emptyTitle}>No {activeTab === 'fob' ? 'Cost Sheets' : 'Analyses'} Yet</Text>
-            <Text style={styles.emptySubtitle}>{isImportMode ? 'Create a cost sheet first to import' : (activeTab === 'fob' ? 'Create your first FOB cost sheet' : 'Run a fabric analysis and save it')}</Text>
+            <View style={[styles.emptyIcon, { backgroundColor: colors.card }, activeTab === 'fabric' && styles.fabricEmptyIcon]}><Text style={styles.emptyIconText}>{activeTab === 'fob' ? '📝' : '🧵'}</Text></View>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>No {activeTab === 'fob' ? 'Cost Sheets' : 'Analyses'} Yet</Text>
+            <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>{isImportMode ? 'Create a cost sheet first to import' : (activeTab === 'fob' ? 'Create your first FOB cost sheet' : 'Run a fabric analysis and save it')}</Text>
             {!isImportMode && <TouchableOpacity style={[styles.emptyButton, activeTab === 'fabric' && styles.fabricEmptyButton]} onPress={() => navigation.navigate(activeTab === 'fob' ? 'Input' : 'FabricAnalyzerInput')}>
                 <Text style={styles.emptyButtonText}>{activeTab === 'fob' ? '+ Create Sheet' : '+ New Analysis'}</Text>
             </TouchableOpacity>}
@@ -202,39 +204,39 @@ const HistoryScreen = ({ navigation, route }) => {
     );
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
             {isImportMode && (
-                <View style={styles.importBanner}>
+                <View style={[styles.importBanner, { backgroundColor: colors.primary }]}>
                     <Text style={styles.importBannerText}>📥 Select a FOB Sheet to Import</Text>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.cancelImportBtn}>
                         <Text style={styles.cancelImportText}>Cancel</Text>
                     </TouchableOpacity>
                 </View>
             )}
-            <View style={styles.header}>
-                <Text style={styles.headerTitle}>{isImportMode ? 'Select FOB Sheet' : 'History'}</Text>
-                <Text style={styles.headerSubtitle}>{isImportMode ? 'Tap a sheet to import its data' : `${fobHistory.length + fabricHistory.length} saved items`}</Text>
+            <View style={[styles.header, { backgroundColor: colors.surface }]}>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{isImportMode ? 'Select FOB Sheet' : 'History'}</Text>
+                <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>{isImportMode ? 'Tap a sheet to import its data' : `${fobHistory.length + fabricHistory.length} saved items`}</Text>
             </View>
-            {!isImportMode && <View style={styles.tabContainer}>
+            {!isImportMode && <View style={[styles.tabContainer, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
                 <TouchableOpacity style={[styles.tab, activeTab === 'fob' && styles.tabActive]} onPress={() => { setActiveTab('fob'); setSelectionMode(false); setSelectedItems([]); }}>
-                    <Text style={styles.tabIcon}>📝</Text><Text style={[styles.tabText, activeTab === 'fob' && styles.tabTextActive]}>FOB Costing</Text>
+                    <Text style={styles.tabIcon}>📝</Text><Text style={[styles.tabText, { color: colors.textSecondary }, activeTab === 'fob' && styles.tabTextActive]}>FOB Costing</Text>
                     {fobHistory.length > 0 && <View style={[styles.tabBadge, activeTab === 'fob' && styles.tabBadgeActive]}><Text style={[styles.tabBadgeText, activeTab === 'fob' && styles.tabBadgeTextActive]}>{fobHistory.length}</Text></View>}
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.tab, activeTab === 'fabric' && styles.fabricTabActive]} onPress={() => { setActiveTab('fabric'); setSelectionMode(false); setSelectedItems([]); }}>
-                    <Text style={styles.tabIcon}>🧵</Text><Text style={[styles.tabText, activeTab === 'fabric' && styles.fabricTabTextActive]}>Fabric Analysis</Text>
+                    <Text style={styles.tabIcon}>🧵</Text><Text style={[styles.tabText, { color: colors.textSecondary }, activeTab === 'fabric' && styles.fabricTabTextActive]}>Fabric Analysis</Text>
                     {fabricHistory.length > 0 && <View style={[styles.tabBadge, activeTab === 'fabric' && styles.fabricTabBadgeActive]}><Text style={[styles.tabBadgeText, activeTab === 'fabric' && styles.fabricTabBadgeTextActive]}>{fabricHistory.length}</Text></View>}
                 </TouchableOpacity>
             </View>}
-            {history.length > 0 && !isImportMode && <View style={styles.toolbar}>
+            {history.length > 0 && !isImportMode && <View style={[styles.toolbar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
                 {selectionMode ? <>
-                    <TouchableOpacity style={styles.toolbarBtn} onPress={() => { setSelectionMode(false); setSelectedItems([]); }}><Text style={styles.toolbarBtnText}>✕ Cancel</Text></TouchableOpacity>
+                    <TouchableOpacity style={[styles.toolbarBtn, { backgroundColor: colors.card }]} onPress={() => { setSelectionMode(false); setSelectedItems([]); }}><Text style={[styles.toolbarBtnText, { color: colors.text }]}>✕ Cancel</Text></TouchableOpacity>
                     <TouchableOpacity style={[styles.toolbarBtn, styles.toolbarDeleteBtn]} onPress={handleDeleteSelected}><Text style={styles.toolbarBtnTextWhite}>🗑️ Delete ({selectedItems.length})</Text></TouchableOpacity>
                 </> : <>
-                    <TouchableOpacity style={styles.toolbarBtn} onPress={() => setSelectionMode(true)}><Text style={styles.toolbarBtnText}>☑️ Select</Text></TouchableOpacity>
+                    <TouchableOpacity style={[styles.toolbarBtn, { backgroundColor: colors.card }]} onPress={() => setSelectionMode(true)}><Text style={[styles.toolbarBtnText, { color: colors.text }]}>☑️ Select</Text></TouchableOpacity>
                     <TouchableOpacity style={[styles.toolbarBtn, styles.toolbarDeleteBtn]} onPress={handleDeleteAll}><Text style={styles.toolbarBtnTextWhite}>🗑️ Clear All</Text></TouchableOpacity>
                 </>}
             </View>}
-            {loading ? <View style={styles.loadingContainer}><Text style={styles.loadingText}>Loading...</Text></View>
+            {loading ? <View style={styles.loadingContainer}><Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading...</Text></View>
                 : history.length === 0 ? renderEmptyState()
                     : <FlatList data={isImportMode ? fobHistory : history} renderItem={activeTab === 'fob' || isImportMode ? renderFobItem : renderFabricItem} keyExtractor={(item) => item.id} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} />}
         </View>

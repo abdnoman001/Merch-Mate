@@ -1,6 +1,7 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
+import { ThemeProvider } from './src/context/ThemeContext';
 import AboutScreen from './src/screens/AboutScreen';
 import BuyerAnalyzerInputScreen from './src/screens/BuyerAnalyzerInputScreen';
 import BuyerAnalyzerResultScreen from './src/screens/BuyerAnalyzerResultScreen';
@@ -11,12 +12,13 @@ import HistoryScreen from './src/screens/HistoryScreen';
 import InputScreen from './src/screens/InputScreen';
 import LandingScreen from './src/screens/LandingScreen';
 import ResultScreen from './src/screens/ResultScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 
 const Stack = createStackNavigator();
 
 export default function App() {
   return (
-    <>
+    <ThemeProvider>
       <StatusBar style="dark" />
       <NavigationContainer>
         <Stack.Navigator initialRouteName="Landing">
@@ -70,9 +72,14 @@ export default function App() {
             component={AboutScreen}
             options={{ title: 'About MerchMate' }}
           />
+          <Stack.Screen
+            name="Settings"
+            component={SettingsScreen}
+            options={{ headerShown: false }}
+          />
         </Stack.Navigator>
       </NavigationContainer>
-    </>
+    </ThemeProvider>
   );
 }
 

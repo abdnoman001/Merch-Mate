@@ -20,9 +20,9 @@ import {
 } from '../utils/fabricConsumptionCalculator';
 
 const GARMENT_TYPES = [
-    { key: 'knit', label: 'Knit', sublabel: 'T-Shirt, Polo', icon: '👕' },
-    { key: 'woven', label: 'Woven', sublabel: 'Shirt, Blouse', icon: '👔' },
-    { key: 'denim', label: 'Denim', sublabel: 'Jeans, Jacket', icon: '👖' },
+    { key: 'knit', label: 'Knit', sublabel: 'T-Shirt', icon: '👕' },
+    { key: 'woven', label: 'Woven', sublabel: 'Shirt', icon: '👔' },
+    { key: 'denim', label: 'Denim', sublabel: 'Jeans', icon: '👖' },
 ];
 
 const FabricAnalyzerInputScreen = ({ navigation, route }) => {
