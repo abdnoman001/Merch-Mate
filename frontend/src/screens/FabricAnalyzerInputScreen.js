@@ -525,14 +525,20 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     scrollContent: {
-        padding: 16,
+        paddingLeft: 16,
+        paddingRight: 16,
     },
 
     // Header
     header: {
+        backgroundColor: '#28a745',
+        paddingTop: 20,
+        paddingBottom: 30,
+        paddingHorizontal: 20,
         alignItems: 'center',
-        marginBottom: 24,
-        paddingTop: 8,
+        borderBottomLeftRadius: 30,
+        borderBottomRightRadius: 30,
+        marginBottom: 20,
     },
     headerIconContainer: {
         width: 64,
@@ -554,12 +560,12 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 26,
         fontWeight: '800',
-        color: '#1a1a2e',
+        color: '#ffffff',
         marginBottom: 4,
     },
     headerSubtitle: {
         fontSize: 14,
-        color: '#666',
+        color: '#e5e5e5',
         textAlign: 'center',
     },
 

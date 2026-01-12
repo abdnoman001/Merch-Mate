@@ -462,26 +462,26 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         borderRadius: 10,
     },
-    viewTabActive: { backgroundColor: '#007bff' },
+    viewTabActive: { backgroundColor: '#9e9ed2' },
     viewTabIcon: { fontSize: 16, marginRight: 6 },
     viewTabText: { fontSize: 14, fontWeight: '600', color: '#666' },
     viewTabTextActive: { color: '#fff' },
 
     // Hero Card
     heroCard: {
-        backgroundColor: '#1a1a2e',
+        backgroundColor: '#9e9ed2',
         marginHorizontal: 16,
         marginTop: 16,
         borderRadius: 16,
         padding: 24,
         alignItems: 'center',
     },
-    heroLabel: { fontSize: 12, fontWeight: '700', color: '#888', letterSpacing: 1 },
+    heroLabel: { fontSize: 12, fontWeight: '700', color: '#ebebeb', letterSpacing: 1 },
     heroValueRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
     heroValue: { fontSize: 48, fontWeight: '800' },
     heroStatusBadge: { marginLeft: 12, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
     heroStatusText: { fontSize: 12, fontWeight: '700', color: '#fff' },
-    heroSubtext: { fontSize: 14, color: '#aaa', marginTop: 8 },
+    heroSubtext: { fontSize: 14, color: '#ebebeb', marginTop: 8 },
 
     // Cards
     card: {

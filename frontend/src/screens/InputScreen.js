@@ -509,6 +509,7 @@ const styles = StyleSheet.create({
         borderBottomLeftRadius: 30,
         borderBottomRightRadius: 30,
         marginBottom: 20,
+        marginHorizontal: 16,
     },
     headerIcon: {
         fontSize: 40,

@@ -517,7 +517,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingTop: 20,
         paddingBottom: 24,
-        backgroundColor: '#fff',
+        backgroundColor: '#9e9ed2',
         borderBottomLeftRadius: 24,
         borderBottomRightRadius: 24,
         shadowColor: '#000',
@@ -525,10 +525,11 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.06,
         shadowRadius: 8,
         elevation: 3,
+        marginHorizontal: 16,
     },
     headerIcon: { fontSize: 40, marginBottom: 8 },
-    headerTitle: { fontSize: 24, fontWeight: '700', color: '#1a1a2e' },
-    headerSubtitle: { fontSize: 14, color: '#666', marginTop: 4 },
+    headerTitle: { fontSize: 24, fontWeight: '700', color: '#f7f7ff' },
+    headerSubtitle: { fontSize: 14, color: '#e0e0e0', marginTop: 4 },
 
     // Cards
     card: {
@@ -547,7 +548,7 @@ const styles = StyleSheet.create({
     cardIcon: { fontSize: 20, marginRight: 10 },
     cardTitle: { fontSize: 16, fontWeight: '700', color: '#1a1a2e', flex: 1 },
     cardBadge: { backgroundColor: '#007bff15', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-    cardBadgeText: { fontSize: 11, color: '#007bff', fontWeight: '600' },
+    cardBadgeText: { fontSize: 11, color: '#9e9ed2', fontWeight: '600' },
     cardContent: {},
     cardHint: { fontSize: 12, color: '#888', marginBottom: 12, lineHeight: 18 },
 
@@ -579,7 +580,7 @@ const styles = StyleSheet.create({
     currencyPrefix: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#007bff',
+        color: '#9e9ed2',
         paddingLeft: 14,
         minWidth: 24,
     },
@@ -622,7 +623,7 @@ const styles = StyleSheet.create({
     pickerOption: { paddingHorizontal: 14, paddingVertical: 12 },
     pickerOptionActive: { backgroundColor: '#007bff15' },
     pickerOptionText: { fontSize: 14, color: '#333' },
-    pickerOptionTextActive: { color: '#007bff', fontWeight: '600' },
+    pickerOptionTextActive: { color: '#9e9ed2', fontWeight: '600' },
 
     // Cost Structure
     costList: {},
@@ -677,7 +678,7 @@ const styles = StyleSheet.create({
         color: '#333',
         textAlign: 'center',
     },
-    profitPercent: { fontSize: 16, fontWeight: '600', color: '#007bff' },
+    profitPercent: { fontSize: 16, fontWeight: '600', color: '#9e9ed2' },
     profitPresets: { flexDirection: 'row', flex: 1, justifyContent: 'flex-end' },
     presetButton: {
         paddingHorizontal: 12,
@@ -686,15 +687,15 @@ const styles = StyleSheet.create({
         backgroundColor: '#f0f0f0',
         marginLeft: 6,
     },
-    presetButtonActive: { backgroundColor: '#007bff' },
+    presetButtonActive: { backgroundColor: '#9e9ed2' },
     presetText: { fontSize: 13, fontWeight: '600', color: '#666' },
     presetTextActive: { color: '#fff' },
 
     // Preview Card
-    previewCard: { backgroundColor: '#1a1a2e' },
+    previewCard: { backgroundColor: '#9e9ed2' },
     previewRow: { flexDirection: 'row', alignItems: 'center' },
     previewItem: { flex: 1, alignItems: 'center' },
-    previewLabel: { fontSize: 12, color: '#aaa', marginBottom: 4 },
+    previewLabel: { fontSize: 12, color: '#e8e8e8', marginBottom: 4 },
     previewValue: { fontSize: 22, fontWeight: '700', color: '#fff' },
     previewValueRed: { color: '#ff6b6b' },
     previewValueGreen: { color: '#51cf66' },
@@ -724,13 +725,13 @@ const styles = StyleSheet.create({
 
     // Analyze Button
     analyzeButton: {
-        backgroundColor: '#007bff',
+        backgroundColor: '#9e9ed2',
         marginHorizontal: 16,
         marginTop: 20,
         paddingVertical: 16,
         borderRadius: 14,
         alignItems: 'center',
-        shadowColor: '#007bff',
+        shadowColor: '#9e9ed2',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,

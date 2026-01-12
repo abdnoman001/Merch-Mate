@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Linking, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { checkForUpdates } from '../utils/updateChecker';
-import { APP_VERSION, GITHUB_REPO_NAME, GITHUB_REPO_OWNER } from '../utils/versionConfig';
+import { APP_VERSION, GITHUB_REPO, GITHUB_OWNER } from '../utils/versionConfig';
 
 export default function SettingsScreen({ navigation }) {
     const [updateInfo, setUpdateInfo] = useState(null);
@@ -26,7 +26,7 @@ export default function SettingsScreen({ navigation }) {
     };
 
     const handleViewOnGitHub = () => {
-        Linking.openURL(`https://github.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}`);
+        Linking.openURL(`https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}`);
     };
 
     const handleCheckUpdates = async () => {
