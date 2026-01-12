@@ -34,25 +34,6 @@
 - Optimized update check to avoid excessive API calls
 - Cleaner notification UI that matches app theme
 
-## 🔧 Technical Changes
-
-### Files Added:
-- `frontend/src/components/UpdateNotificationBanner.js` - Update notification UI component
-- `frontend/src/utils/updateChecker.js` - Update checking logic
-- `frontend/src/utils/versionConfig.js` - Centralized version configuration
-
-### Files Modified:
-- `frontend/src/utils/exportersXLSX.js` - Fixed mobile Excel compatibility
-- `frontend/src/screens/AboutScreen.js` - Version display updates
-- `frontend/src/screens/LandingScreen.js` - Added update notification banner
-- `frontend/app.json` - Version bump to 1.0.6
-- `frontend/package.json` - Version bump to 1.0.6
-- `version.json` - Updated release information
-
-## 📥 Download
-
-- **Android APK:** [MerchMate-v1.0.6.apk](https://github.com/abdnoman001/Merch-Mate/releases/download/v1.0.6/MerchMate-v1.0.6.apk)
-
 ## 🔄 Upgrade Instructions
 
 1. Download the latest APK from the link above
