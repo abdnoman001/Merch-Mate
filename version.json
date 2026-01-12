@@ -3,7 +3,7 @@
   "versionName": "MerchMate v1.0.6",
   "releaseNotes": "✨ What's New in v1.0.6\n\n📱 Mobile Compatibility\n- Excel exports now use .xlsx format for better mobile compatibility\n- Fixed issue where Excel files couldn't open on mobile devices\n\n🔔 Update Notifications\n- Added automatic update notifications when new versions are available\n- Users can now easily download updates directly from the app\n\n🐛 Bug Fixes\n- Fixed version display inconsistencies across screens\n- Improved error handling in export functions\n\n📊 Improvements\n- Better file naming for exported documents\n- Enhanced Excel export structure for readability",
   "downloadUrl": "https://github.com/abdnoman001/Merch-Mate/releases/download/v1.0.6/MerchMate-v1.0.6.apk",
-  "releaseDate": "2026-01-10",
+  "releaseDate": "2026-01-12",
   "minimumVersion": "1.0.0",
   "isForceUpdate": false,
   "platforms": {

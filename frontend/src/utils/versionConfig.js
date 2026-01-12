@@ -1,7 +1,7 @@
 // Version Configuration for MerchMate App
 // This file centralizes version information and update checking configuration
 
-export const APP_VERSION = '1.0.5';
+export const APP_VERSION = '1.0.6';
 export const APP_NAME = 'MerchMate';
 
 // GitHub repository information
