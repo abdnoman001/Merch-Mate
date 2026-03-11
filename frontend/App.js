@@ -12,7 +12,13 @@ import HistoryScreen from './src/screens/HistoryScreen';
 import InputScreen from './src/screens/InputScreen';
 import LandingScreen from './src/screens/LandingScreen';
 import ResultScreen from './src/screens/ResultScreen';
+import SampleCreateScreen from './src/screens/SampleCreateScreen';
+import SampleDetailScreen from './src/screens/SampleDetailScreen';
+import SampleListScreen from './src/screens/SampleListScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import TNACreateScreen from './src/screens/TNACreateScreen';
+import TNADetailScreen from './src/screens/TNADetailScreen';
+import TNAListScreen from './src/screens/TNAListScreen';
 
 const Stack = createStackNavigator();
 
@@ -71,6 +77,36 @@ export default function App() {
             name="About"
             component={AboutScreen}
             options={{ title: 'About MerchMate' }}
+          />
+          <Stack.Screen
+            name="TNAList"
+            component={TNAListScreen}
+            options={{ title: 'TNA Calendar' }}
+          />
+          <Stack.Screen
+            name="TNACreate"
+            component={TNACreateScreen}
+            options={{ title: 'Create TNA' }}
+          />
+          <Stack.Screen
+            name="TNADetail"
+            component={TNADetailScreen}
+            options={{ title: 'TNA Details' }}
+          />
+          <Stack.Screen
+            name="SampleList"
+            component={SampleListScreen}
+            options={{ title: 'Sample Tracking' }}
+          />
+          <Stack.Screen
+            name="SampleCreate"
+            component={SampleCreateScreen}
+            options={{ title: 'Create Sample Tracker' }}
+          />
+          <Stack.Screen
+            name="SampleDetail"
+            component={SampleDetailScreen}
+            options={{ title: 'Sample Details' }}
           />
           <Stack.Screen
             name="Settings"

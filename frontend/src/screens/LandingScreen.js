@@ -9,19 +9,18 @@ export default function LandingScreen({ navigation }) {
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             {/* Settings Button */}
-            <TouchableOpacity
-                style={[styles.settingsButton, { backgroundColor: colors.card }]}
-                onPress={() => navigation.navigate('Settings')}
-                activeOpacity={0.7}>
-                <Text style={styles.settingsIcon}>⚙️</Text>
-            </TouchableOpacity>
-
             <ScrollView showsVerticalScrollIndicator={false}>
                 {/* Update Notification Banner */}
                 <UpdateNotificationBanner />
 
                 {/* Header Section */}
                 <View style={[styles.header, { backgroundColor: colors.surface }]}>
+                                <TouchableOpacity
+                style={[styles.settingsButton, { backgroundColor: colors.card }]}
+                onPress={() => navigation.navigate('Settings')}
+                activeOpacity={0.7}>
+                <Text style={styles.settingsIcon}>☰</Text>
+            </TouchableOpacity>
                     <View style={styles.logoWrapper}>
                         <Image source={require('../../assets/icon.png')} style={styles.logo} resizeMode="contain" />
                     </View>
@@ -70,6 +69,30 @@ export default function LandingScreen({ navigation }) {
                             <View style={[styles.cardArrow, styles.marginArrow]}><Text style={styles.arrowText}>→</Text></View>
                         </TouchableOpacity>
 
+                        {/* TNA Calendar Card */}
+                        <TouchableOpacity style={[styles.card, styles.tnaCard, { backgroundColor: colors.card }]} onPress={() => navigation.navigate('TNAList')} activeOpacity={0.85}>
+                            <View style={[styles.cardIconContainer, styles.tnaIconContainer]}>
+                                <Text style={styles.cardIcon}>📅</Text>
+                            </View>
+                            <View style={styles.cardContent}>
+                                <Text style={[styles.cardTitle, { color: colors.text }]}>TNA Calendar</Text>
+                                <Text style={[styles.cardDescription, { color: colors.textSecondary }]}>Time & Action planning with milestone tracking</Text>
+                            </View>
+                            <View style={[styles.cardArrow, styles.tnaArrow]}><Text style={styles.arrowText}>→</Text></View>
+                        </TouchableOpacity>
+
+                        {/* Sample Tracking Card */}
+                        <TouchableOpacity style={[styles.card, styles.sampleCard, { backgroundColor: colors.card }]} onPress={() => navigation.navigate('SampleList')} activeOpacity={0.85}>
+                            <View style={[styles.cardIconContainer, styles.sampleIconContainer]}>
+                                <Text style={styles.cardIcon}>🧪</Text>
+                            </View>
+                            <View style={styles.cardContent}>
+                                <Text style={[styles.cardTitle, { color: colors.text }]}>Sample Tracking</Text>
+                                <Text style={[styles.cardDescription, { color: colors.textSecondary }]}>Track sample stages from development to shipment</Text>
+                            </View>
+                            <View style={[styles.cardArrow, styles.sampleArrow]}><Text style={styles.arrowText}>→</Text></View>
+                        </TouchableOpacity>
+
                         {/* History Card */}
                         <TouchableOpacity style={[styles.card, styles.historyCard, { backgroundColor: colors.card }]} onPress={() => navigation.navigate('History')} activeOpacity={0.85}>
                             <View style={[styles.cardIconContainer, styles.historyIconContainer]}>
@@ -95,7 +118,7 @@ export default function LandingScreen({ navigation }) {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    settingsButton: { position: 'absolute', top: 50, right: 20, zIndex: 10, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
+    settingsButton: { position: 'absolute', top: 50, right: 20, zIndex: 10, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
     settingsIcon: { fontSize: 20 },
     header: { alignItems: 'center', paddingTop: 60, paddingBottom: 32, backgroundColor: '#fff', borderBottomLeftRadius: 32, borderBottomRightRadius: 32, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 12, elevation: 5 },
     logoWrapper: { width: 90, height: 90, borderRadius: 24, backgroundColor: '#f5f7fa', alignItems: 'center', justifyContent: 'center', marginBottom: 16, shadowColor: '#007bff', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10 },
@@ -109,10 +132,14 @@ const styles = StyleSheet.create({
     fabricCard: { borderLeftColor: '#28a745' },
     marginCard: { borderLeftColor: '#6f42c1' },
     historyCard: { borderLeftColor: '#6c757d' },
+    tnaCard: { borderLeftColor: '#e67e22' },
+    sampleCard: { borderLeftColor: '#9c27b0' },
     cardIconContainer: { width: 52, height: 52, borderRadius: 14, backgroundColor: '#007bff15', alignItems: 'center', justifyContent: 'center', marginRight: 14 },
     fabricIconContainer: { backgroundColor: '#28a74515' },
     marginIconContainer: { backgroundColor: '#6f42c115' },
     historyIconContainer: { backgroundColor: '#6c757d15' },
+    tnaIconContainer: { backgroundColor: '#e67e2215' },
+    sampleIconContainer: { backgroundColor: '#9c27b015' },
     cardIcon: { fontSize: 26 },
     cardContent: { flex: 1 },
     cardTitle: { fontSize: 17, fontWeight: '700', color: '#1a1a2e', marginBottom: 4 },
@@ -121,6 +148,8 @@ const styles = StyleSheet.create({
     fabricArrow: { backgroundColor: '#28a745' },
     marginArrow: { backgroundColor: '#6f42c1' },
     historyArrow: { backgroundColor: '#6c757d' },
+    tnaArrow: { backgroundColor: '#e67e22' },
+    sampleArrow: { backgroundColor: '#9c27b0' },
     arrowText: { color: '#fff', fontSize: 18, fontWeight: '700' },
     footer: { alignItems: 'center', paddingVertical: 20, paddingBottom: 32 },
     footerText: { fontSize: 13, color: '#999', marginBottom: 4 },
