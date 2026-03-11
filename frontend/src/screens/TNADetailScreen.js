@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { differenceInDays, format, startOfDay, parse, isValid, addDays } from 'date-fns';
+import { Alert, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { differenceInDays, format, startOfDay, isValid, addDays } from 'date-fns';
 import uuid from 'react-native-uuid';
 import { useTheme } from '../context/ThemeContext';
 import { getTNAById, updateTNA, deleteTNA } from '../utils/storageService';
@@ -52,17 +53,18 @@ const TNADetailScreen = ({ route, navigation }) => {
     const [selectedMilestone, setSelectedMilestone] = useState(null);
     const [editNotes, setEditNotes] = useState('');
     const [editOwner, setEditOwner] = useState('merchandiser');
-    const [editDueDay, setEditDueDay] = useState('');
-    const [editDueMonth, setEditDueMonth] = useState('');
-    const [editDueYear, setEditDueYear] = useState('');
+    const [editDueDate, setEditDueDate] = useState(null);
 
     // Add milestone modal
     const [addModalVisible, setAddModalVisible] = useState(false);
     const [newName, setNewName] = useState('');
     const [newOwner, setNewOwner] = useState('merchandiser');
-    const [newDueDay, setNewDueDay] = useState('');
-    const [newDueMonth, setNewDueMonth] = useState('');
-    const [newDueYear, setNewDueYear] = useState('');
+    const [newDueDate, setNewDueDate] = useState(null);
+
+    // Calendar picker state
+    const [calendarVisible, setCalendarVisible] = useState(false);
+    const [calendarDate, setCalendarDate] = useState(new Date());
+    const [calendarTarget, setCalendarTarget] = useState(null); // 'editDue' | 'newDue'
 
     const loadTNA = useCallback(async () => {
         try {
@@ -110,21 +112,39 @@ const TNADetailScreen = ({ route, navigation }) => {
         }
     };
 
+    // --- Calendar picker handlers ---
+    const openCalendar = (target, existingDate) => {
+        setCalendarTarget(target);
+        setCalendarDate(existingDate || new Date());
+        setCalendarVisible(true);
+    };
+
+    const onCalendarChange = (event, selectedDate) => {
+        if (Platform.OS === 'android') setCalendarVisible(false);
+        if (event.type === 'dismissed') return;
+        if (selectedDate) {
+            setCalendarDate(selectedDate);
+            if (Platform.OS === 'android') applyCalendarDate(selectedDate);
+        }
+    };
+
+    const confirmIOSCalendar = () => {
+        applyCalendarDate(calendarDate);
+        setCalendarVisible(false);
+    };
+
+    const applyCalendarDate = (date) => {
+        if (calendarTarget === 'editDue') setEditDueDate(date);
+        else if (calendarTarget === 'newDue') setNewDueDate(date);
+    };
+
     // --- Edit milestone modal ---
     const openEditModal = (milestone) => {
         setSelectedMilestone(milestone);
         setEditNotes(milestone.notes || '');
         setEditOwner(milestone.owner || 'merchandiser');
         const due = new Date(milestone.dueDate);
-        if (isValid(due)) {
-            setEditDueDay(String(due.getDate()));
-            setEditDueMonth(String(due.getMonth() + 1));
-            setEditDueYear(String(due.getFullYear()));
-        } else {
-            setEditDueDay('');
-            setEditDueMonth('');
-            setEditDueYear('');
-        }
+        setEditDueDate(isValid(due) ? due : new Date());
         setModalVisible(true);
     };
 
@@ -159,17 +179,8 @@ const TNADetailScreen = ({ route, navigation }) => {
 
     const handleSaveEdit = async () => {
         if (!selectedMilestone || !tna) return;
-        const day = parseInt(editDueDay, 10);
-        const month = parseInt(editDueMonth, 10);
-        const year = parseInt(editDueYear, 10);
-        if (!day || !month || !year || day < 1 || day > 31 || month < 1 || month > 12 || year < 2000) {
-            Alert.alert('Invalid Date', 'Please enter a valid day, month, and year.');
-            return;
-        }
-        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const parsedDate = parse(dateStr, 'yyyy-MM-dd', new Date());
-        if (!isValid(parsedDate)) {
-            Alert.alert('Invalid Date', 'The date entered is not valid.');
+        if (!editDueDate || !isValid(editDueDate)) {
+            Alert.alert('Invalid Date', 'Please select a valid due date.');
             return;
         }
 
@@ -179,7 +190,7 @@ const TNADetailScreen = ({ route, navigation }) => {
                     ...m,
                     notes: editNotes,
                     owner: editOwner,
-                    dueDate: parsedDate.toISOString(),
+                    dueDate: editDueDate.toISOString(),
                 };
                 updated.status = computeMilestoneStatus(updated);
                 return updated;
@@ -196,10 +207,7 @@ const TNADetailScreen = ({ route, navigation }) => {
     const openAddModal = () => {
         setNewName('');
         setNewOwner('merchandiser');
-        const tomorrow = addDays(new Date(), 7);
-        setNewDueDay(String(tomorrow.getDate()));
-        setNewDueMonth(String(tomorrow.getMonth() + 1));
-        setNewDueYear(String(tomorrow.getFullYear()));
+        setNewDueDate(addDays(new Date(), 7));
         setAddModalVisible(true);
     };
 
@@ -208,28 +216,19 @@ const TNADetailScreen = ({ route, navigation }) => {
             Alert.alert('Required', 'Please enter a milestone name.');
             return;
         }
-        const day = parseInt(newDueDay, 10);
-        const month = parseInt(newDueMonth, 10);
-        const year = parseInt(newDueYear, 10);
-        if (!day || !month || !year || day < 1 || day > 31 || month < 1 || month > 12 || year < 2000) {
-            Alert.alert('Invalid Date', 'Please enter a valid day, month, and year.');
-            return;
-        }
-        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const parsedDate = parse(dateStr, 'yyyy-MM-dd', new Date());
-        if (!isValid(parsedDate)) {
-            Alert.alert('Invalid Date', 'The date entered is not valid.');
+        if (!newDueDate || !isValid(newDueDate)) {
+            Alert.alert('Invalid Date', 'Please select a valid due date.');
             return;
         }
 
         const newMilestone = {
             id: uuid.v4(),
             name: newName.trim(),
-            dueDate: parsedDate.toISOString(),
+            dueDate: newDueDate.toISOString(),
             owner: newOwner,
             completedAt: null,
             notes: '',
-            status: computeMilestoneStatus({ dueDate: parsedDate.toISOString(), completedAt: null }),
+            status: computeMilestoneStatus({ dueDate: newDueDate.toISOString(), completedAt: null }),
         };
         const updatedMilestones = [...(tna.milestones || []), newMilestone];
         // Sort milestones by due date
@@ -539,46 +538,15 @@ const TNADetailScreen = ({ route, navigation }) => {
 
                             {/* Due date */}
                             <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Due Date</Text>
-                            <View style={styles.dateInputRow}>
-                                <View style={styles.dateInputWrapper}>
-                                    <Text style={[styles.dateInputLabel, { color: colors.textSecondary }]}>Day</Text>
-                                    <TextInput
-                                        style={[styles.dateInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                                        keyboardType="number-pad"
-                                        maxLength={2}
-                                        value={editDueDay}
-                                        onChangeText={setEditDueDay}
-                                        placeholder="DD"
-                                        placeholderTextColor={colors.textSecondary}
-                                    />
-                                </View>
-                                <Text style={[styles.dateSeparator, { color: colors.textSecondary }]}>/</Text>
-                                <View style={styles.dateInputWrapper}>
-                                    <Text style={[styles.dateInputLabel, { color: colors.textSecondary }]}>Month</Text>
-                                    <TextInput
-                                        style={[styles.dateInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                                        keyboardType="number-pad"
-                                        maxLength={2}
-                                        value={editDueMonth}
-                                        onChangeText={setEditDueMonth}
-                                        placeholder="MM"
-                                        placeholderTextColor={colors.textSecondary}
-                                    />
-                                </View>
-                                <Text style={[styles.dateSeparator, { color: colors.textSecondary }]}>/</Text>
-                                <View style={[styles.dateInputWrapper, { flex: 1.5 }]}>
-                                    <Text style={[styles.dateInputLabel, { color: colors.textSecondary }]}>Year</Text>
-                                    <TextInput
-                                        style={[styles.dateInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                                        keyboardType="number-pad"
-                                        maxLength={4}
-                                        value={editDueYear}
-                                        onChangeText={setEditDueYear}
-                                        placeholder="YYYY"
-                                        placeholderTextColor={colors.textSecondary}
-                                    />
-                                </View>
-                            </View>
+                            <TouchableOpacity
+                                style={[styles.datePickerButton, { backgroundColor: colors.background, borderColor: colors.border }]}
+                                onPress={() => openCalendar('editDue', editDueDate)}
+                            >
+                                <Text style={styles.datePickerEmoji}>{'\uD83D\uDCC5'}</Text>
+                                <Text style={[styles.datePickerText, { color: editDueDate ? colors.text : colors.textSecondary }]}>
+                                    {editDueDate ? format(editDueDate, 'dd MMM yyyy') : 'Tap to select'}
+                                </Text>
+                            </TouchableOpacity>
 
                             {/* Owner */}
                             <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Owner</Text>
@@ -664,46 +632,15 @@ const TNADetailScreen = ({ route, navigation }) => {
 
                             {/* Due date */}
                             <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Due Date</Text>
-                            <View style={styles.dateInputRow}>
-                                <View style={styles.dateInputWrapper}>
-                                    <Text style={[styles.dateInputLabel, { color: colors.textSecondary }]}>Day</Text>
-                                    <TextInput
-                                        style={[styles.dateInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                                        keyboardType="number-pad"
-                                        maxLength={2}
-                                        value={newDueDay}
-                                        onChangeText={setNewDueDay}
-                                        placeholder="DD"
-                                        placeholderTextColor={colors.textSecondary}
-                                    />
-                                </View>
-                                <Text style={[styles.dateSeparator, { color: colors.textSecondary }]}>/</Text>
-                                <View style={styles.dateInputWrapper}>
-                                    <Text style={[styles.dateInputLabel, { color: colors.textSecondary }]}>Month</Text>
-                                    <TextInput
-                                        style={[styles.dateInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                                        keyboardType="number-pad"
-                                        maxLength={2}
-                                        value={newDueMonth}
-                                        onChangeText={setNewDueMonth}
-                                        placeholder="MM"
-                                        placeholderTextColor={colors.textSecondary}
-                                    />
-                                </View>
-                                <Text style={[styles.dateSeparator, { color: colors.textSecondary }]}>/</Text>
-                                <View style={[styles.dateInputWrapper, { flex: 1.5 }]}>
-                                    <Text style={[styles.dateInputLabel, { color: colors.textSecondary }]}>Year</Text>
-                                    <TextInput
-                                        style={[styles.dateInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                                        keyboardType="number-pad"
-                                        maxLength={4}
-                                        value={newDueYear}
-                                        onChangeText={setNewDueYear}
-                                        placeholder="YYYY"
-                                        placeholderTextColor={colors.textSecondary}
-                                    />
-                                </View>
-                            </View>
+                            <TouchableOpacity
+                                style={[styles.datePickerButton, { backgroundColor: colors.background, borderColor: colors.border }]}
+                                onPress={() => openCalendar('newDue', newDueDate)}
+                            >
+                                <Text style={styles.datePickerEmoji}>{'\uD83D\uDCC5'}</Text>
+                                <Text style={[styles.datePickerText, { color: newDueDate ? colors.text : colors.textSecondary }]}>
+                                    {newDueDate ? format(newDueDate, 'dd MMM yyyy') : 'Tap to select'}
+                                </Text>
+                            </TouchableOpacity>
 
                             {/* Owner */}
                             <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Owner</Text>
@@ -748,6 +685,45 @@ const TNADetailScreen = ({ route, navigation }) => {
                     </View>
                 </View>
             </Modal>
+
+            {/* Native Date Picker – Android renders inline, iOS renders in a Modal */}
+            {Platform.OS === 'android' && calendarVisible && (
+                <DateTimePicker
+                    value={calendarDate}
+                    mode="date"
+                    display="calendar"
+                    onChange={onCalendarChange}
+                />
+            )}
+
+            {Platform.OS === 'ios' && (
+                <Modal
+                    visible={calendarVisible}
+                    animationType="slide"
+                    transparent
+                    onRequestClose={() => setCalendarVisible(false)}
+                >
+                    <View style={styles.iosPickerOverlay}>
+                        <View style={[styles.iosPickerContainer, { backgroundColor: colors.card }]}>
+                            <View style={styles.iosPickerHeader}>
+                                <TouchableOpacity onPress={() => setCalendarVisible(false)}>
+                                    <Text style={[styles.iosPickerCancel, { color: colors.textSecondary }]}>Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={confirmIOSCalendar}>
+                                    <Text style={[styles.iosPickerDone, { color: ACCENT }]}>Done</Text>
+                                </TouchableOpacity>
+                            </View>
+                            <DateTimePicker
+                                value={calendarDate}
+                                mode="date"
+                                display="spinner"
+                                onChange={onCalendarChange}
+                                style={styles.iosDatePicker}
+                            />
+                        </View>
+                    </View>
+                </Modal>
+            )}
         </View>
     );
 };
@@ -1147,34 +1123,54 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
 
-    // Date input
-    dateInputRow: {
+    // Date picker button
+    datePickerButton: {
         flexDirection: 'row',
-        alignItems: 'flex-end',
-        gap: 4,
-    },
-    dateInputWrapper: {
-        flex: 1,
-    },
-    dateInputLabel: {
-        fontSize: 11,
-        marginBottom: 4,
-        textAlign: 'center',
-    },
-    dateInput: {
+        alignItems: 'center',
         borderWidth: 1,
-        borderRadius: 10,
-        paddingHorizontal: 12,
-        paddingVertical: 12,
+        borderRadius: 12,
+        paddingHorizontal: 14,
+        paddingVertical: 14,
+        gap: 10,
+    },
+    datePickerEmoji: {
+        fontSize: 20,
+    },
+    datePickerText: {
         fontSize: 16,
         fontWeight: '600',
-        textAlign: 'center',
     },
-    dateSeparator: {
-        fontSize: 20,
-        fontWeight: '300',
-        marginBottom: 12,
-        marginHorizontal: 2,
+
+    // iOS date picker modal
+    iosPickerOverlay: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        backgroundColor: 'rgba(0,0,0,0.4)',
+    },
+    iosPickerContainer: {
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        paddingBottom: 30,
+    },
+    iosPickerHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 14,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: '#e0e0e040',
+    },
+    iosPickerCancel: {
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    iosPickerDone: {
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    iosDatePicker: {
+        height: 200,
     },
 
     // Owner selector

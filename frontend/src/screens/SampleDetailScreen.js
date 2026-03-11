@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Dimensions, FlatList, Image, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, Image, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
-import { format, parse, isValid } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { useTheme } from '../context/ThemeContext';
 import { getSampleTrackerById, updateSampleTracker } from '../utils/storageService';
 
 const ACCENT = '#9c27b0';
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const PHOTO_SIZE = (SCREEN_WIDTH - 32 - 16 - 12) / 2;
+const PHOTO_SIZE = (SCREEN_WIDTH - 64 - 12) / 2;
 
 const STATUS_COLORS = {
     pending: '#6c757d',
@@ -25,15 +26,7 @@ const STATUS_LABELS = {
     revision: 'Revision',
 };
 
-const STATUS_EMOJIS = {
-    pending: '\u23F3',
-    submitted: '\uD83D\uDCE8',
-    approved: '\u2705',
-    rejected: '\u274C',
-    revision: '\uD83D\uDD04',
-};
-
-const STAGE_ABBREVIATIONS = {
+const STAGE_SHORT = {
     'Development Sample': 'Dev',
     'Proto Sample': 'Proto',
     'PP Sample': 'PP',
@@ -48,338 +41,197 @@ export default function SampleDetailScreen({ route, navigation }) {
 
     const [sample, setSample] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [selectedStageIndex, setSelectedStageIndex] = useState(0);
-    const [dateModalVisible, setDateModalVisible] = useState(false);
-    const [dateModalField, setDateModalField] = useState(null);
-    const [dateDay, setDateDay] = useState('');
-    const [dateMonth, setDateMonth] = useState('');
-    const [dateYear, setDateYear] = useState('');
+    const [activeStage, setActiveStage] = useState(0);
     const [fullscreenPhoto, setFullscreenPhoto] = useState(null);
+
+    // Date picker state
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [datePickerField, setDatePickerField] = useState(null);
+    const [datePickerValue, setDatePickerValue] = useState(new Date());
 
     const loadSample = useCallback(async () => {
         try {
             setLoading(true);
-            setError(null);
             const data = await getSampleTrackerById(sampleId);
-            if (!data) {
-                setError('Sample tracker not found.');
-                return;
-            }
-            setSample(data);
-        } catch (err) {
-            setError('Failed to load sample tracker.');
+            if (data) setSample(data);
+        } catch {
+            // silent
         } finally {
             setLoading(false);
         }
     }, [sampleId]);
 
+    useEffect(() => { loadSample(); }, [loadSample]);
     useEffect(() => {
-        loadSample();
-    }, [loadSample]);
-
-    useEffect(() => {
-        const unsubscribe = navigation.addListener('focus', () => {
-            loadSample();
-        });
-        return unsubscribe;
+        const unsub = navigation.addListener('focus', loadSample);
+        return unsub;
     }, [navigation, loadSample]);
 
-    const saveAndUpdate = async (updatedSample) => {
-        setSample(updatedSample);
-        await updateSampleTracker(sampleId, updatedSample);
+    // ─── Helpers ─────────────────────────────────────────────
+
+    const save = async (updated) => {
+        setSample(updated);
+        await updateSampleTracker(sampleId, updated);
     };
 
-    const updateStage = async (stageIndex, updates) => {
-        const updatedStages = [...sample.stages];
-        updatedStages[stageIndex] = { ...updatedStages[stageIndex], ...updates };
-        const updatedSample = { ...sample, stages: updatedStages };
-        await saveAndUpdate(updatedSample);
+    const patchStage = async (index, patch) => {
+        const stages = [...sample.stages];
+        stages[index] = { ...stages[index], ...patch };
+        await save({ ...sample, stages, updatedAt: new Date().toISOString() });
     };
 
-    // ─── Date modal helpers ───────────────────────────────────
+    const fmtDate = (d) => {
+        if (!d) return null;
+        const dt = new Date(d);
+        return isValid(dt) ? format(dt, 'dd MMM yyyy') : null;
+    };
 
-    const openDateModal = (field) => {
-        const stage = sample.stages[selectedStageIndex];
-        const existingDate = stage[field];
+    // ─── Date picker ────────────────────────────────────────
 
-        if (existingDate) {
-            try {
-                const d = new Date(existingDate);
-                if (isValid(d)) {
-                    setDateDay(String(d.getDate()));
-                    setDateMonth(String(d.getMonth() + 1));
-                    setDateYear(String(d.getFullYear()));
-                } else {
-                    setDateDay('');
-                    setDateMonth('');
-                    setDateYear('');
-                }
-            } catch {
-                setDateDay('');
-                setDateMonth('');
-                setDateYear('');
+    const openDatePicker = (field) => {
+        const stage = sample.stages[activeStage];
+        const existing = stage[field] ? new Date(stage[field]) : new Date();
+        setDatePickerField(field);
+        setDatePickerValue(isValid(existing) ? existing : new Date());
+        setShowDatePicker(true);
+    };
+
+    const onDateChange = (event, selectedDate) => {
+        if (Platform.OS === 'android') setShowDatePicker(false);
+        if (event.type === 'dismissed') return;
+        if (selectedDate) {
+            setDatePickerValue(selectedDate);
+            if (Platform.OS === 'android') {
+                patchStage(activeStage, { [datePickerField]: selectedDate.toISOString() });
             }
-        } else {
-            const now = new Date();
-            setDateDay(String(now.getDate()));
-            setDateMonth(String(now.getMonth() + 1));
-            setDateYear(String(now.getFullYear()));
         }
-
-        setDateModalField(field);
-        setDateModalVisible(true);
     };
 
-    const confirmDate = () => {
-        const day = parseInt(dateDay, 10);
-        const month = parseInt(dateMonth, 10);
-        const year = parseInt(dateYear, 10);
-
-        if (!day || !month || !year || day < 1 || day > 31 || month < 1 || month > 12 || year < 2000 || year > 2100) {
-            Alert.alert('Invalid Date', 'Please enter a valid date (DD/MM/YYYY).');
-            return;
-        }
-
-        const dateStr = `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
-        const parsed = parse(dateStr, 'dd/MM/yyyy', new Date());
-
-        if (!isValid(parsed)) {
-            Alert.alert('Invalid Date', 'The date you entered is not valid.');
-            return;
-        }
-
-        updateStage(selectedStageIndex, { [dateModalField]: parsed.toISOString() });
-        setDateModalVisible(false);
-        setDateModalField(null);
+    const confirmIOSDate = () => {
+        patchStage(activeStage, { [datePickerField]: datePickerValue.toISOString() });
+        setShowDatePicker(false);
     };
 
-    const clearDate = () => {
-        updateStage(selectedStageIndex, { [dateModalField]: null });
-        setDateModalVisible(false);
-        setDateModalField(null);
-    };
+    // ─── Photos ─────────────────────────────────────────────
 
-    // ─── Photo helpers ────────────────────────────────────────
-
-    const pickImageFromGallery = async () => {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const addPhoto = async (fromCamera) => {
+        const permReq = fromCamera
+            ? ImagePicker.requestCameraPermissionsAsync
+            : ImagePicker.requestMediaLibraryPermissionsAsync;
+        const { status } = await permReq();
         if (status !== 'granted') {
-            Alert.alert('Permission Denied', 'We need access to your photo library to add photos.');
+            Alert.alert('Permission Denied', fromCamera
+                ? 'Camera access is needed to take photos.'
+                : 'Gallery access is needed to select photos.');
             return;
         }
-
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: false,
-            quality: 0.8,
-        });
-
-        if (!result.canceled && result.assets && result.assets.length > 0) {
-            const uri = result.assets[0].uri;
-            const stage = sample.stages[selectedStageIndex];
-            const updatedPhotos = [...(stage.photos || []), uri];
-            await updateStage(selectedStageIndex, { photos: updatedPhotos });
+        const launcher = fromCamera
+            ? ImagePicker.launchCameraAsync
+            : ImagePicker.launchImageLibraryAsync;
+        const result = await launcher({ quality: 0.8 });
+        if (!result.canceled && result.assets?.[0]) {
+            const stage = sample.stages[activeStage];
+            await patchStage(activeStage, { photos: [...(stage.photos || []), result.assets[0].uri] });
         }
     };
 
-    const pickImageFromCamera = async () => {
-        const { status } = await ImagePicker.requestCameraPermissionsAsync();
-        if (status !== 'granted') {
-            Alert.alert('Permission Denied', 'We need access to your camera to take photos.');
-            return;
-        }
-
-        const result = await ImagePicker.launchCameraAsync({
-            allowsEditing: false,
-            quality: 0.8,
-        });
-
-        if (!result.canceled && result.assets && result.assets.length > 0) {
-            const uri = result.assets[0].uri;
-            const stage = sample.stages[selectedStageIndex];
-            const updatedPhotos = [...(stage.photos || []), uri];
-            await updateStage(selectedStageIndex, { photos: updatedPhotos });
-        }
-    };
-
-    const handleAddPhoto = () => {
-        Alert.alert('Add Photo', 'Choose a source', [
-            { text: 'Camera', onPress: pickImageFromCamera },
-            { text: 'Gallery', onPress: pickImageFromGallery },
-            { text: 'Cancel', style: 'cancel' },
-        ]);
-    };
-
-    const handleDeletePhoto = (photoIndex) => {
-        Alert.alert('Delete Photo', 'Are you sure you want to remove this photo?', [
+    const deletePhoto = (i) => {
+        Alert.alert('Delete Photo', 'Remove this photo?', [
             { text: 'Cancel', style: 'cancel' },
             {
-                text: 'Delete',
-                style: 'destructive',
-                onPress: async () => {
-                    const stage = sample.stages[selectedStageIndex];
-                    const updatedPhotos = stage.photos.filter((_, i) => i !== photoIndex);
-                    await updateStage(selectedStageIndex, { photos: updatedPhotos });
-                },
+                text: 'Delete', style: 'destructive', onPress: () => {
+                    const photos = sample.stages[activeStage].photos.filter((_, idx) => idx !== i);
+                    patchStage(activeStage, { photos });
+                }
             },
         ]);
     };
 
-    // ─── Status action handlers ───────────────────────────────
+    // ─── Status actions ─────────────────────────────────────
 
-    const handleMarkSubmitted = async () => {
-        await updateStage(selectedStageIndex, {
-            status: 'submitted',
-            submittedDate: new Date().toISOString(),
-        });
+    const setStatus = (status, extra = {}) => patchStage(activeStage, { status, ...extra });
+
+    const statusActions = {
+        pending: [
+            { label: 'Mark Submitted', color: STATUS_COLORS.submitted, icon: '📨', onPress: () => setStatus('submitted', { submittedDate: new Date().toISOString() }) },
+        ],
+        submitted: [
+            { label: 'Approve', color: STATUS_COLORS.approved, icon: '✅', onPress: () => setStatus('approved', { approvedDate: new Date().toISOString() }) },
+            { label: 'Revision', color: STATUS_COLORS.revision, icon: '🔄', onPress: () => setStatus('revision') },
+            { label: 'Reject', color: STATUS_COLORS.rejected, icon: '❌', onPress: () => setStatus('rejected', { approvedDate: new Date().toISOString() }) },
+        ],
+        rejected: [
+            { label: 'Request Revision', color: STATUS_COLORS.revision, icon: '🔄', onPress: () => setStatus('revision') },
+        ],
+        revision: [
+            { label: 'Mark Submitted', color: STATUS_COLORS.submitted, icon: '📨', onPress: () => setStatus('submitted', { submittedDate: new Date().toISOString() }) },
+        ],
+        approved: [],
     };
 
-    const handleApprove = async () => {
-        await updateStage(selectedStageIndex, {
-            status: 'approved',
-            approvedDate: new Date().toISOString(),
-        });
-    };
+    // ─── Render ──────────────────────────────────────────────
 
-    const handleRequestRevision = async () => {
-        await updateStage(selectedStageIndex, {
-            status: 'revision',
-        });
-    };
-
-    const handleReject = async () => {
-        await updateStage(selectedStageIndex, {
-            status: 'rejected',
-            approvedDate: new Date().toISOString(),
-        });
-    };
-
-    // ─── Text field handlers ──────────────────────────────────
-
-    const handleBuyerCommentsChange = (text) => {
-        updateStage(selectedStageIndex, { buyerComments: text });
-    };
-
-    const handleNotesChange = (text) => {
-        updateStage(selectedStageIndex, { notes: text });
-    };
-
-    // ─── Formatting helpers ───────────────────────────────────
-
-    const formatDate = (dateStr) => {
-        if (!dateStr) return null;
-        try {
-            const d = new Date(dateStr);
-            if (isValid(d)) {
-                return format(d, 'dd MMM yyyy');
-            }
-        } catch {
-            // ignore
-        }
-        return null;
-    };
-
-    // ─── Render: Loading / Error ──────────────────────────────
-
-    if (loading) {
+    if (loading || !sample) {
         return (
-            <View style={[styles.container, styles.centerContent, { backgroundColor: colors.background }]}>
-                <Text style={styles.loadingEmoji}>{'\uD83E\uDDEA'}</Text>
-                <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading sample tracker...</Text>
+            <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
+                <Text style={{ fontSize: 40, marginBottom: 12 }}>{loading ? '🧪' : '⚠️'}</Text>
+                <Text style={[styles.centerText, { color: colors.textSecondary }]}>
+                    {loading ? 'Loading...' : 'Sample not found.'}
+                </Text>
+                {!loading && (
+                    <TouchableOpacity style={styles.retryBtn} onPress={() => navigation.goBack()}>
+                        <Text style={styles.retryBtnText}>Go Back</Text>
+                    </TouchableOpacity>
+                )}
             </View>
         );
     }
 
-    if (error || !sample) {
-        return (
-            <View style={[styles.container, styles.centerContent, { backgroundColor: colors.background }]}>
-                <Text style={styles.errorEmoji}>{'\u26A0\uFE0F'}</Text>
-                <Text style={[styles.errorText, { color: colors.text }]}>{error || 'Sample not found.'}</Text>
-                <TouchableOpacity style={styles.retryButton} onPress={loadSample}>
-                    <Text style={styles.retryButtonText}>Retry</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    }
-
-    // ─── Derived data ─────────────────────────────────────────
-
-    const selectedStage = sample.stages[selectedStageIndex];
-    const stageStatusColor = STATUS_COLORS[selectedStage.status] || STATUS_COLORS.pending;
-
-    // ─── Render: Main screen ──────────────────────────────────
+    const stage = sample.stages[activeStage];
+    const stageColor = STATUS_COLORS[stage.status] || STATUS_COLORS.pending;
+    const actions = statusActions[stage.status] || [];
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            {/* Header */}
-            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-                <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.card }]} onPress={() => navigation.goBack()}>
-                    <Text style={[styles.backIcon, { color: colors.text }]}>{'\u2190'}</Text>
-                </TouchableOpacity>
-                <View style={styles.headerCenter}>
-                    <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>Sample Tracker</Text>
-                </View>
-                <View style={styles.placeholder} />
-            </View>
-
-            <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                {/* Order Info Section */}
-                <View style={[styles.orderInfoCard, { backgroundColor: colors.card }]}>
-                    <View style={styles.orderInfoRow}>
-                        <View style={styles.orderInfoItem}>
-                            <Text style={[styles.orderInfoLabel, { color: colors.textSecondary }]}>Order No.</Text>
-                            <Text style={[styles.orderInfoValue, { color: colors.text }]} numberOfLines={1}>{sample.orderNo}</Text>
-                        </View>
-                        <View style={[styles.orderInfoDivider, { backgroundColor: colors.border }]} />
-                        <View style={styles.orderInfoItem}>
-                            <Text style={[styles.orderInfoLabel, { color: colors.textSecondary }]}>Buyer</Text>
-                            <Text style={[styles.orderInfoValue, { color: colors.text }]} numberOfLines={1}>{sample.buyerName}</Text>
-                        </View>
-                        <View style={[styles.orderInfoDivider, { backgroundColor: colors.border }]} />
-                        <View style={styles.orderInfoItem}>
-                            <Text style={[styles.orderInfoLabel, { color: colors.textSecondary }]}>Style</Text>
-                            <Text style={[styles.orderInfoValue, { color: colors.text }]} numberOfLines={1}>{sample.style}</Text>
-                        </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+                {/* Order Info */}
+                <View style={[styles.infoBar, { backgroundColor: colors.card }]}>
+                    <View style={styles.infoItem}>
+                        <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Order</Text>
+                        <Text style={[styles.infoValue, { color: colors.text }]} numberOfLines={1}>{sample.orderNo}</Text>
+                    </View>
+                    <View style={[styles.infoDivider, { backgroundColor: colors.border }]} />
+                    <View style={styles.infoItem}>
+                        <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Buyer</Text>
+                        <Text style={[styles.infoValue, { color: colors.text }]} numberOfLines={1}>{sample.buyerName}</Text>
+                    </View>
+                    <View style={[styles.infoDivider, { backgroundColor: colors.border }]} />
+                    <View style={styles.infoItem}>
+                        <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Style</Text>
+                        <Text style={[styles.infoValue, { color: colors.text }]} numberOfLines={1}>{sample.style}</Text>
                     </View>
                 </View>
 
-                {/* Horizontal Stepper */}
+                {/* Stepper */}
                 <View style={[styles.stepperCard, { backgroundColor: colors.card }]}>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.stepperContainer}>
-                        {sample.stages.map((stage, index) => {
-                            const color = STATUS_COLORS[stage.status] || STATUS_COLORS.pending;
-                            const isSelected = index === selectedStageIndex;
-                            const isLast = index === sample.stages.length - 1;
-                            const abbrev = STAGE_ABBREVIATIONS[stage.stageName] || stage.stageName.substring(0, 4);
-
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.stepper}>
+                        {sample.stages.map((s, i) => {
+                            const c = STATUS_COLORS[s.status] || STATUS_COLORS.pending;
+                            const sel = i === activeStage;
+                            const last = i === sample.stages.length - 1;
                             return (
-                                <View key={stage.id} style={styles.stepWrapper}>
+                                <View key={s.id} style={styles.stepWrap}>
                                     <View style={styles.stepRow}>
                                         <TouchableOpacity
-                                            style={[
-                                                styles.stepCircle,
-                                                { backgroundColor: color },
-                                                isSelected && styles.stepCircleSelected,
-                                            ]}
-                                            onPress={() => setSelectedStageIndex(index)}
-                                            activeOpacity={0.7}
-                                        >
-                                            <Text style={styles.stepCircleText}>{index + 1}</Text>
+                                            style={[styles.stepDot, { backgroundColor: c }, sel && styles.stepDotActive]}
+                                            onPress={() => setActiveStage(i)}
+                                            activeOpacity={0.7}>
+                                            <Text style={styles.stepNum}>{i + 1}</Text>
                                         </TouchableOpacity>
-                                        {!isLast && (
-                                            <View style={[styles.stepLine, { backgroundColor: STATUS_COLORS[sample.stages[index + 1].status] || '#ccc' }]} />
-                                        )}
+                                        {!last && <View style={[styles.stepLine, { backgroundColor: STATUS_COLORS[sample.stages[i + 1].status] || '#ddd' }]} />}
                                     </View>
-                                    <Text
-                                        style={[
-                                            styles.stepLabel,
-                                            { color: isSelected ? color : colors.textSecondary },
-                                            isSelected && styles.stepLabelSelected,
-                                        ]}
-                                        numberOfLines={1}
-                                    >
-                                        {abbrev}
+                                    <Text style={[styles.stepText, { color: sel ? c : colors.textSecondary }, sel && { fontWeight: '700' }]} numberOfLines={1}>
+                                        {STAGE_SHORT[s.stageName] || s.stageName.substring(0, 5)}
                                     </Text>
                                 </View>
                             );
@@ -387,776 +239,275 @@ export default function SampleDetailScreen({ route, navigation }) {
                     </ScrollView>
                 </View>
 
-                {/* Selected Stage Detail Panel */}
-                <View style={[styles.stageDetailCard, { backgroundColor: colors.card }]}>
-                    {/* Stage Title & Status */}
-                    <View style={styles.stageHeader}>
-                        <View style={styles.stageTitleRow}>
-                            <Text style={styles.stageEmoji}>{STATUS_EMOJIS[selectedStage.status] || '\u23F3'}</Text>
-                            <Text style={[styles.stageTitle, { color: colors.text }]}>{selectedStage.stageName}</Text>
-                        </View>
-                        <View style={[styles.statusBadge, { backgroundColor: stageStatusColor + '20' }]}>
-                            <View style={[styles.statusDot, { backgroundColor: stageStatusColor }]} />
-                            <Text style={[styles.statusBadgeText, { color: stageStatusColor }]}>
-                                {STATUS_LABELS[selectedStage.status] || 'Pending'}
-                            </Text>
+                {/* Stage Detail */}
+                <View style={[styles.detailCard, { backgroundColor: colors.card }]}>
+                    {/* Title + Status */}
+                    <View style={styles.titleRow}>
+                        <Text style={[styles.stageTitle, { color: colors.text }]}>{stage.stageName}</Text>
+                        <View style={[styles.badge, { backgroundColor: stageColor + '18' }]}>
+                            <View style={[styles.badgeDot, { backgroundColor: stageColor }]} />
+                            <Text style={[styles.badgeText, { color: stageColor }]}>{STATUS_LABELS[stage.status]}</Text>
                         </View>
                     </View>
 
-                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                    <View style={[styles.sep, { backgroundColor: colors.border }]} />
 
-                    {/* Submitted Date */}
-                    <View style={styles.fieldSection}>
-                        <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{'\uD83D\uDCC5'} Submitted Date</Text>
-                        <View style={styles.dateRow}>
-                            <Text style={[styles.dateText, { color: colors.text }]}>
-                                {formatDate(selectedStage.submittedDate) || 'Not set'}
-                            </Text>
-                            <TouchableOpacity
-                                style={[styles.setDateButton, { backgroundColor: ACCENT + '15' }]}
-                                onPress={() => openDateModal('submittedDate')}
-                            >
-                                <Text style={[styles.setDateButtonText, { color: ACCENT }]}>Set Date</Text>
+                    {/* Dates */}
+                    <DateField
+                        label="Submitted Date"
+                        value={fmtDate(stage.submittedDate)}
+                        onPress={() => openDatePicker('submittedDate')}
+                        onClear={() => patchStage(activeStage, { submittedDate: null })}
+                        colors={colors}
+                    />
+                    {(stage.status === 'approved' || stage.status === 'rejected') && (
+                        <DateField
+                            label={stage.status === 'approved' ? 'Approved Date' : 'Rejected Date'}
+                            value={fmtDate(stage.approvedDate)}
+                            onPress={() => openDatePicker('approvedDate')}
+                            onClear={() => patchStage(activeStage, { approvedDate: null })}
+                            colors={colors}
+                        />
+                    )}
+
+                    <View style={[styles.sep, { backgroundColor: colors.border }]} />
+
+                    {/* Buyer Comments */}
+                    <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Buyer Comments</Text>
+                    <TextInput
+                        style={[styles.textInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                        value={stage.buyerComments || ''}
+                        onChangeText={(t) => patchStage(activeStage, { buyerComments: t })}
+                        placeholder="Enter buyer comments..."
+                        placeholderTextColor={colors.textSecondary}
+                        multiline
+                        textAlignVertical="top"
+                    />
+
+                    {/* Notes */}
+                    <Text style={[styles.fieldLabel, { color: colors.textSecondary, marginTop: 12 }]}>Notes</Text>
+                    <TextInput
+                        style={[styles.textInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                        value={stage.notes || ''}
+                        onChangeText={(t) => patchStage(activeStage, { notes: t })}
+                        placeholder="Add notes..."
+                        placeholderTextColor={colors.textSecondary}
+                        multiline
+                        textAlignVertical="top"
+                    />
+
+                    <View style={[styles.sep, { backgroundColor: colors.border }]} />
+
+                    {/* Photos */}
+                    <View style={styles.photoHeader}>
+                        <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Photos</Text>
+                        <View style={styles.photoActions}>
+                            <TouchableOpacity style={styles.photoBtn} onPress={() => addPhoto(true)}>
+                                <Text style={styles.photoBtnText}>📷 Camera</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.photoBtn} onPress={() => addPhoto(false)}>
+                                <Text style={styles.photoBtnText}>🖼️ Gallery</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
 
-                    {/* Approved / Rejected Date (shown conditionally) */}
-                    {(selectedStage.status === 'approved' || selectedStage.status === 'rejected') && (
-                        <View style={styles.fieldSection}>
-                            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
-                                {selectedStage.status === 'approved' ? '\u2705 Approved Date' : '\u274C Rejected Date'}
-                            </Text>
-                            <View style={styles.dateRow}>
-                                <Text style={[styles.dateText, { color: colors.text }]}>
-                                    {formatDate(selectedStage.approvedDate) || 'Not set'}
-                                </Text>
+                    {stage.photos?.length > 0 ? (
+                        <View style={styles.photoGrid}>
+                            {stage.photos.map((uri, i) => (
                                 <TouchableOpacity
-                                    style={[styles.setDateButton, { backgroundColor: ACCENT + '15' }]}
-                                    onPress={() => openDateModal('approvedDate')}
-                                >
-                                    <Text style={[styles.setDateButtonText, { color: ACCENT }]}>Set Date</Text>
+                                    key={`p-${i}`}
+                                    style={styles.photoWrap}
+                                    onPress={() => setFullscreenPhoto(uri)}
+                                    onLongPress={() => deletePhoto(i)}
+                                    activeOpacity={0.8}>
+                                    <Image source={{ uri }} style={styles.photo} resizeMode="cover" />
                                 </TouchableOpacity>
-                            </View>
+                            ))}
+                        </View>
+                    ) : (
+                        <View style={[styles.emptyPhotos, { backgroundColor: colors.background }]}>
+                            <Text style={{ fontSize: 28, marginBottom: 6 }}>🖼️</Text>
+                            <Text style={{ fontSize: 13, color: colors.textSecondary }}>No photos yet</Text>
                         </View>
                     )}
 
-                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                    <View style={[styles.sep, { backgroundColor: colors.border }]} />
 
-                    {/* Buyer Comments */}
-                    <View style={styles.fieldSection}>
-                        <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{'\uD83D\uDCAC'} Buyer Comments</Text>
-                        <TextInput
-                            style={[styles.textArea, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                            value={selectedStage.buyerComments || ''}
-                            onChangeText={handleBuyerCommentsChange}
-                            placeholder="Enter buyer comments..."
-                            placeholderTextColor={colors.textSecondary}
-                            multiline
-                            numberOfLines={3}
-                            textAlignVertical="top"
-                        />
-                    </View>
-
-                    {/* Notes */}
-                    <View style={styles.fieldSection}>
-                        <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{'\uD83D\uDCDD'} Notes</Text>
-                        <TextInput
-                            style={[styles.textArea, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                            value={selectedStage.notes || ''}
-                            onChangeText={handleNotesChange}
-                            placeholder="Add notes..."
-                            placeholderTextColor={colors.textSecondary}
-                            multiline
-                            numberOfLines={3}
-                            textAlignVertical="top"
-                        />
-                    </View>
-
-                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-                    {/* Photo Gallery */}
-                    <View style={styles.fieldSection}>
-                        <View style={styles.photoHeaderRow}>
-                            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{'\uD83D\uDCF7'} Photos</Text>
-                            <TouchableOpacity style={styles.addPhotoButton} onPress={handleAddPhoto}>
-                                <Text style={styles.addPhotoIcon}>{'\u2795'}</Text>
-                                <Text style={styles.addPhotoText}>Add Photo</Text>
-                            </TouchableOpacity>
+                    {/* Actions */}
+                    {actions.length > 0 ? (
+                        <View style={styles.actionRow}>
+                            {actions.map((a) => (
+                                <TouchableOpacity
+                                    key={a.label}
+                                    style={[styles.actionBtn, { backgroundColor: a.color }]}
+                                    onPress={a.onPress}
+                                    activeOpacity={0.8}>
+                                    <Text style={styles.actionIcon}>{a.icon}</Text>
+                                    <Text style={styles.actionLabel}>{a.label}</Text>
+                                </TouchableOpacity>
+                            ))}
                         </View>
-
-                        {selectedStage.photos && selectedStage.photos.length > 0 ? (
-                            <View style={styles.photoGrid}>
-                                {selectedStage.photos.map((uri, photoIndex) => (
-                                    <TouchableOpacity
-                                        key={`photo-${photoIndex}-${uri}`}
-                                        style={styles.photoWrapper}
-                                        onPress={() => setFullscreenPhoto(uri)}
-                                        onLongPress={() => handleDeletePhoto(photoIndex)}
-                                        activeOpacity={0.8}
-                                    >
-                                        <Image source={{ uri }} style={styles.photoImage} resizeMode="cover" />
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
-                        ) : (
-                            <View style={[styles.noPhotosContainer, { backgroundColor: colors.background }]}>
-                                <Text style={styles.noPhotosEmoji}>{'\uD83D\uDDBC\uFE0F'}</Text>
-                                <Text style={[styles.noPhotosText, { color: colors.textSecondary }]}>No photos yet</Text>
-                                <Text style={[styles.noPhotosHint, { color: colors.textSecondary }]}>Tap "Add Photo" to get started</Text>
-                            </View>
-                        )}
-                    </View>
-
-                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-                    {/* Status Action Buttons */}
-                    <View style={styles.actionSection}>
-                        {selectedStage.status === 'pending' && (
-                            <TouchableOpacity
-                                style={[styles.actionButton, { backgroundColor: STATUS_COLORS.submitted }]}
-                                onPress={handleMarkSubmitted}
-                            >
-                                <Text style={styles.actionButtonIcon}>{'\uD83D\uDCE8'}</Text>
-                                <Text style={styles.actionButtonText}>Mark Submitted</Text>
-                            </TouchableOpacity>
-                        )}
-
-                        {selectedStage.status === 'submitted' && (
-                            <>
-                                <TouchableOpacity
-                                    style={[styles.actionButton, { backgroundColor: STATUS_COLORS.approved }]}
-                                    onPress={handleApprove}
-                                >
-                                    <Text style={styles.actionButtonIcon}>{'\u2705'}</Text>
-                                    <Text style={styles.actionButtonText}>Approve</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[styles.actionButton, { backgroundColor: STATUS_COLORS.revision }]}
-                                    onPress={handleRequestRevision}
-                                >
-                                    <Text style={styles.actionButtonIcon}>{'\uD83D\uDD04'}</Text>
-                                    <Text style={styles.actionButtonText}>Request Revision</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[styles.actionButton, { backgroundColor: STATUS_COLORS.rejected }]}
-                                    onPress={handleReject}
-                                >
-                                    <Text style={styles.actionButtonIcon}>{'\u274C'}</Text>
-                                    <Text style={styles.actionButtonText}>Reject</Text>
-                                </TouchableOpacity>
-                            </>
-                        )}
-
-                        {selectedStage.status === 'rejected' && (
-                            <TouchableOpacity
-                                style={[styles.actionButton, { backgroundColor: STATUS_COLORS.revision }]}
-                                onPress={handleRequestRevision}
-                            >
-                                <Text style={styles.actionButtonIcon}>{'\uD83D\uDD04'}</Text>
-                                <Text style={styles.actionButtonText}>Request Revision</Text>
-                            </TouchableOpacity>
-                        )}
-
-                        {selectedStage.status === 'revision' && (
-                            <TouchableOpacity
-                                style={[styles.actionButton, { backgroundColor: STATUS_COLORS.submitted }]}
-                                onPress={handleMarkSubmitted}
-                            >
-                                <Text style={styles.actionButtonIcon}>{'\uD83D\uDCE8'}</Text>
-                                <Text style={styles.actionButtonText}>Mark Submitted</Text>
-                            </TouchableOpacity>
-                        )}
-
-                        {selectedStage.status === 'approved' && (
-                            <View style={[styles.finalStateBanner, { backgroundColor: STATUS_COLORS.approved + '15' }]}>
-                                <Text style={styles.finalStateEmoji}>{'\u2705'}</Text>
-                                <Text style={[styles.finalStateText, { color: STATUS_COLORS.approved }]}>
-                                    This stage has been approved
-                                </Text>
-                            </View>
-                        )}
-                    </View>
+                    ) : stage.status === 'approved' ? (
+                        <View style={[styles.approvedBanner, { backgroundColor: STATUS_COLORS.approved + '12' }]}>
+                            <Text style={{ fontSize: 16, marginRight: 8 }}>✅</Text>
+                            <Text style={[styles.approvedText, { color: STATUS_COLORS.approved }]}>This stage has been approved</Text>
+                        </View>
+                    ) : null}
                 </View>
 
                 <View style={{ height: 40 }} />
             </ScrollView>
 
-            {/* Date Picker Modal */}
-            <Modal visible={dateModalVisible} transparent animationType="fade" onRequestClose={() => setDateModalVisible(false)}>
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.dateModalContent, { backgroundColor: colors.card }]}>
-                        <Text style={[styles.dateModalTitle, { color: colors.text }]}>
-                            {dateModalField === 'submittedDate' ? 'Set Submitted Date' : 'Set Date'}
-                        </Text>
-                        <Text style={[styles.dateModalSubtitle, { color: colors.textSecondary }]}>
-                            Enter date in DD / MM / YYYY format
-                        </Text>
+            {/* Native Date Picker */}
+            {showDatePicker && Platform.OS === 'android' && (
+                <DateTimePicker
+                    value={datePickerValue}
+                    mode="date"
+                    display="calendar"
+                    onChange={onDateChange}
+                />
+            )}
 
-                        <View style={styles.dateInputRow}>
-                            <View style={styles.dateInputWrapper}>
-                                <Text style={[styles.dateInputLabel, { color: colors.textSecondary }]}>Day</Text>
-                                <TextInput
-                                    style={[styles.dateInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                                    value={dateDay}
-                                    onChangeText={setDateDay}
-                                    keyboardType="number-pad"
-                                    maxLength={2}
-                                    placeholder="DD"
-                                    placeholderTextColor={colors.textSecondary}
-                                    textAlign="center"
-                                />
+            {/* iOS Date Picker Modal */}
+            {showDatePicker && Platform.OS === 'ios' && (
+                <Modal transparent animationType="fade" onRequestClose={() => setShowDatePicker(false)}>
+                    <View style={styles.overlay}>
+                        <View style={[styles.iosPickerCard, { backgroundColor: colors.card }]}>
+                            <Text style={[styles.iosPickerTitle, { color: colors.text }]}>Select Date</Text>
+                            <DateTimePicker
+                                value={datePickerValue}
+                                mode="date"
+                                display="spinner"
+                                onChange={onDateChange}
+                                style={{ height: 180 }}
+                            />
+                            <View style={styles.iosPickerActions}>
+                                <TouchableOpacity style={[styles.iosBtn, { borderColor: colors.border, borderWidth: 1 }]} onPress={() => setShowDatePicker(false)}>
+                                    <Text style={[styles.iosBtnText, { color: colors.text }]}>Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.iosBtn, { backgroundColor: ACCENT }]} onPress={confirmIOSDate}>
+                                    <Text style={[styles.iosBtnText, { color: '#fff' }]}>Confirm</Text>
+                                </TouchableOpacity>
                             </View>
-                            <Text style={[styles.dateSeparator, { color: colors.textSecondary }]}>/</Text>
-                            <View style={styles.dateInputWrapper}>
-                                <Text style={[styles.dateInputLabel, { color: colors.textSecondary }]}>Month</Text>
-                                <TextInput
-                                    style={[styles.dateInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                                    value={dateMonth}
-                                    onChangeText={setDateMonth}
-                                    keyboardType="number-pad"
-                                    maxLength={2}
-                                    placeholder="MM"
-                                    placeholderTextColor={colors.textSecondary}
-                                    textAlign="center"
-                                />
-                            </View>
-                            <Text style={[styles.dateSeparator, { color: colors.textSecondary }]}>/</Text>
-                            <View style={[styles.dateInputWrapper, { flex: 1.5 }]}>
-                                <Text style={[styles.dateInputLabel, { color: colors.textSecondary }]}>Year</Text>
-                                <TextInput
-                                    style={[styles.dateInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                                    value={dateYear}
-                                    onChangeText={setDateYear}
-                                    keyboardType="number-pad"
-                                    maxLength={4}
-                                    placeholder="YYYY"
-                                    placeholderTextColor={colors.textSecondary}
-                                    textAlign="center"
-                                />
-                            </View>
-                        </View>
-
-                        <View style={styles.dateModalActions}>
-                            <TouchableOpacity
-                                style={[styles.dateModalButton, styles.dateModalClearButton, { borderColor: colors.border }]}
-                                onPress={clearDate}
-                            >
-                                <Text style={[styles.dateModalClearText, { color: colors.textSecondary }]}>Clear</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.dateModalButton, styles.dateModalCancelButton, { borderColor: colors.border }]}
-                                onPress={() => setDateModalVisible(false)}
-                            >
-                                <Text style={[styles.dateModalCancelText, { color: colors.text }]}>Cancel</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.dateModalButton, styles.dateModalConfirmButton]}
-                                onPress={confirmDate}
-                            >
-                                <Text style={styles.dateModalConfirmText}>Confirm</Text>
-                            </TouchableOpacity>
                         </View>
                     </View>
-                </View>
-            </Modal>
+                </Modal>
+            )}
 
-            {/* Fullscreen Photo Modal */}
+            {/* Fullscreen Photo */}
             <Modal visible={!!fullscreenPhoto} transparent animationType="fade" onRequestClose={() => setFullscreenPhoto(null)}>
-                <View style={styles.fullscreenOverlay}>
-                    <TouchableOpacity style={styles.fullscreenClose} onPress={() => setFullscreenPhoto(null)}>
-                        <Text style={styles.fullscreenCloseText}>{'\u2715'}</Text>
+                <View style={styles.fsOverlay}>
+                    <TouchableOpacity style={styles.fsClose} onPress={() => setFullscreenPhoto(null)}>
+                        <Text style={styles.fsCloseText}>✕</Text>
                     </TouchableOpacity>
-                    {fullscreenPhoto && (
-                        <Image source={{ uri: fullscreenPhoto }} style={styles.fullscreenImage} resizeMode="contain" />
-                    )}
+                    {fullscreenPhoto && <Image source={{ uri: fullscreenPhoto }} style={styles.fsImage} resizeMode="contain" />}
                 </View>
             </Modal>
         </View>
     );
 }
 
+// ─── Reusable date field component ──────────────────────────
+
+function DateField({ label, value, onPress, onClear, colors }) {
+    return (
+        <View style={styles.dateField}>
+            <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>{label}</Text>
+            <View style={styles.dateRow}>
+                <Text style={[styles.dateValue, { color: value ? colors.text : colors.textSecondary }]}>
+                    {value || 'Not set'}
+                </Text>
+                <View style={styles.dateBtns}>
+                    {value && (
+                        <TouchableOpacity style={[styles.dateMiniBtn, { backgroundColor: colors.background }]} onPress={onClear}>
+                            <Text style={{ fontSize: 12, color: STATUS_COLORS.rejected }}>Clear</Text>
+                        </TouchableOpacity>
+                    )}
+                    <TouchableOpacity style={[styles.dateMiniBtn, { backgroundColor: ACCENT + '15' }]} onPress={onPress}>
+                        <Text style={{ fontSize: 12, color: ACCENT, fontWeight: '600' }}>📅 Pick</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </View>
+    );
+}
+
+// ─── Styles ─────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-    // ─── Layout ───────────────────────────────────────────────
-    container: {
-        flex: 1,
-    },
-    centerContent: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: 32,
-    },
-    scrollContent: {
-        flex: 1,
-    },
+    container: { flex: 1 },
+    center: { alignItems: 'center', justifyContent: 'center', padding: 32 },
+    centerText: { fontSize: 15, fontWeight: '500' },
+    retryBtn: { backgroundColor: ACCENT, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 10, marginTop: 16 },
+    retryBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
 
-    // ─── Header ───────────────────────────────────────────────
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingVertical: 16,
-        paddingTop: 48,
-        borderBottomWidth: 1,
-    },
-    backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    backIcon: {
-        fontSize: 24,
-    },
-    headerCenter: {
-        flex: 1,
-        alignItems: 'center',
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: '700',
-    },
-    placeholder: {
-        width: 40,
-    },
+    // Info bar
+    infoBar: { flexDirection: 'row', marginHorizontal: 16, marginTop: 12, borderRadius: 14, padding: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
+    infoItem: { flex: 1, alignItems: 'center' },
+    infoLabel: { fontSize: 10, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 3 },
+    infoValue: { fontSize: 13, fontWeight: '700' },
+    infoDivider: { width: 1, height: 28, marginHorizontal: 6 },
 
-    // ─── Loading / Error ──────────────────────────────────────
-    loadingEmoji: {
-        fontSize: 48,
-        marginBottom: 16,
-    },
-    loadingText: {
-        fontSize: 15,
-        fontWeight: '500',
-    },
-    errorEmoji: {
-        fontSize: 48,
-        marginBottom: 16,
-    },
-    errorText: {
-        fontSize: 16,
-        fontWeight: '600',
-        textAlign: 'center',
-        marginBottom: 20,
-    },
-    retryButton: {
-        backgroundColor: ACCENT,
-        paddingHorizontal: 28,
-        paddingVertical: 12,
-        borderRadius: 10,
-    },
-    retryButtonText: {
-        color: '#fff',
-        fontSize: 15,
-        fontWeight: '600',
-    },
+    // Stepper
+    stepperCard: { marginHorizontal: 16, marginTop: 10, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
+    stepper: { flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 6 },
+    stepWrap: { alignItems: 'center', width: 56 },
+    stepRow: { flexDirection: 'row', alignItems: 'center' },
+    stepDot: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+    stepDotActive: { borderWidth: 3, borderColor: 'rgba(0,0,0,0.12)', transform: [{ scale: 1.15 }] },
+    stepNum: { color: '#fff', fontSize: 13, fontWeight: '700' },
+    stepLine: { width: 24, height: 3, borderRadius: 2 },
+    stepText: { fontSize: 10, marginTop: 5, textAlign: 'center' },
 
-    // ─── Order Info Card ──────────────────────────────────────
-    orderInfoCard: {
-        marginHorizontal: 16,
-        marginTop: 16,
-        borderRadius: 16,
-        padding: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 3,
-    },
-    orderInfoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    orderInfoItem: {
-        flex: 1,
-        alignItems: 'center',
-    },
-    orderInfoLabel: {
-        fontSize: 11,
-        fontWeight: '600',
-        letterSpacing: 0.3,
-        textTransform: 'uppercase',
-        marginBottom: 4,
-    },
-    orderInfoValue: {
-        fontSize: 14,
-        fontWeight: '700',
-    },
-    orderInfoDivider: {
-        width: 1,
-        height: 32,
-        marginHorizontal: 8,
-    },
+    // Detail card
+    detailCard: { marginHorizontal: 16, marginTop: 10, borderRadius: 16, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 },
+    titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
+    stageTitle: { fontSize: 17, fontWeight: '700', flex: 1, marginRight: 10 },
+    badge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+    badgeDot: { width: 7, height: 7, borderRadius: 4, marginRight: 5 },
+    badgeText: { fontSize: 12, fontWeight: '600' },
+    sep: { height: 1, marginVertical: 14 },
 
-    // ─── Horizontal Stepper ───────────────────────────────────
-    stepperCard: {
-        marginHorizontal: 16,
-        marginTop: 12,
-        borderRadius: 16,
-        paddingVertical: 16,
-        paddingHorizontal: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 3,
-    },
-    stepperContainer: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        paddingHorizontal: 8,
-    },
-    stepWrapper: {
-        alignItems: 'center',
-        width: 58,
-    },
-    stepRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    stepCircle: {
-        width: 34,
-        height: 34,
-        borderRadius: 17,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    stepCircleSelected: {
-        borderWidth: 3,
-        borderColor: 'rgba(0,0,0,0.15)',
-        transform: [{ scale: 1.15 }],
-    },
-    stepCircleText: {
-        color: '#fff',
-        fontSize: 14,
-        fontWeight: '700',
-    },
-    stepLine: {
-        width: 24,
-        height: 3,
-        borderRadius: 1.5,
-    },
-    stepLabel: {
-        fontSize: 10,
-        fontWeight: '500',
-        marginTop: 6,
-        textAlign: 'center',
-    },
-    stepLabelSelected: {
-        fontWeight: '700',
-    },
+    // Date field
+    dateField: { marginBottom: 10 },
+    fieldLabel: { fontSize: 13, fontWeight: '600', marginBottom: 6 },
+    dateRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    dateValue: { fontSize: 15, fontWeight: '500' },
+    dateBtns: { flexDirection: 'row', gap: 6 },
+    dateMiniBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
 
-    // ─── Stage Detail Card ────────────────────────────────────
-    stageDetailCard: {
-        marginHorizontal: 16,
-        marginTop: 12,
-        borderRadius: 16,
-        padding: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 3,
-    },
-    stageHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 12,
-    },
-    stageTitleRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flex: 1,
-        marginRight: 12,
-    },
-    stageEmoji: {
-        fontSize: 22,
-        marginRight: 10,
-    },
-    stageTitle: {
-        fontSize: 17,
-        fontWeight: '700',
-    },
-    statusBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 10,
-    },
-    statusDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        marginRight: 6,
-    },
-    statusBadgeText: {
-        fontSize: 12,
-        fontWeight: '600',
-    },
-    divider: {
-        height: 1,
-        marginVertical: 12,
-    },
+    // Text inputs
+    textInput: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, minHeight: 64, lineHeight: 20 },
 
-    // ─── Field sections ───────────────────────────────────────
-    fieldSection: {
-        marginBottom: 16,
-    },
-    fieldLabel: {
-        fontSize: 13,
-        fontWeight: '600',
-        marginBottom: 8,
-    },
-    dateRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-    },
-    dateText: {
-        fontSize: 15,
-        fontWeight: '500',
-    },
-    setDateButton: {
-        paddingHorizontal: 14,
-        paddingVertical: 7,
-        borderRadius: 8,
-    },
-    setDateButtonText: {
-        fontSize: 13,
-        fontWeight: '600',
-    },
-    textArea: {
-        borderWidth: 1,
-        borderRadius: 10,
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-        fontSize: 14,
-        minHeight: 72,
-        lineHeight: 20,
-    },
+    // Photos
+    photoHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+    photoActions: { flexDirection: 'row', gap: 6 },
+    photoBtn: { backgroundColor: ACCENT, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
+    photoBtnText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+    photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    photoWrap: { width: PHOTO_SIZE, height: PHOTO_SIZE, borderRadius: 10, overflow: 'hidden', backgroundColor: '#e9ecef' },
+    photo: { width: '100%', height: '100%' },
+    emptyPhotos: { alignItems: 'center', paddingVertical: 24, borderRadius: 10 },
 
-    // ─── Photo Gallery ────────────────────────────────────────
-    photoHeaderRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 12,
-    },
-    addPhotoButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: ACCENT,
-        paddingHorizontal: 12,
-        paddingVertical: 7,
-        borderRadius: 8,
-    },
-    addPhotoIcon: {
-        fontSize: 12,
-        marginRight: 6,
-        color: '#fff',
-    },
-    addPhotoText: {
-        fontSize: 13,
-        fontWeight: '600',
-        color: '#fff',
-    },
-    photoGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
-    },
-    photoWrapper: {
-        width: PHOTO_SIZE,
-        height: PHOTO_SIZE,
-        borderRadius: 12,
-        overflow: 'hidden',
-        backgroundColor: '#e9ecef',
-    },
-    photoImage: {
-        width: '100%',
-        height: '100%',
-    },
-    noPhotosContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 28,
-        borderRadius: 12,
-    },
-    noPhotosEmoji: {
-        fontSize: 32,
-        marginBottom: 8,
-    },
-    noPhotosText: {
-        fontSize: 14,
-        fontWeight: '600',
-        marginBottom: 4,
-    },
-    noPhotosHint: {
-        fontSize: 12,
-    },
+    // Actions
+    actionRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+    actionBtn: { flex: 1, minWidth: 100, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderRadius: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 2 },
+    actionIcon: { fontSize: 15, marginRight: 6 },
+    actionLabel: { color: '#fff', fontSize: 13, fontWeight: '700' },
+    approvedBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderRadius: 10 },
+    approvedText: { fontSize: 14, fontWeight: '600' },
 
-    // ─── Action Buttons ───────────────────────────────────────
-    actionSection: {
-        marginTop: 4,
-        gap: 10,
-    },
-    actionButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 14,
-        borderRadius: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-    actionButtonIcon: {
-        fontSize: 18,
-        marginRight: 8,
-    },
-    actionButtonText: {
-        color: '#fff',
-        fontSize: 15,
-        fontWeight: '700',
-    },
-    finalStateBanner: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 14,
-        borderRadius: 12,
-    },
-    finalStateEmoji: {
-        fontSize: 18,
-        marginRight: 8,
-    },
-    finalStateText: {
-        fontSize: 14,
-        fontWeight: '600',
-    },
+    // iOS date picker modal
+    overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', paddingHorizontal: 24 },
+    iosPickerCard: { borderRadius: 16, padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 10 },
+    iosPickerTitle: { fontSize: 17, fontWeight: '700', marginBottom: 8, textAlign: 'center' },
+    iosPickerActions: { flexDirection: 'row', gap: 10, marginTop: 12 },
+    iosBtn: { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
+    iosBtnText: { fontSize: 15, fontWeight: '600' },
 
-    // ─── Date Modal ───────────────────────────────────────────
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: 24,
-    },
-    dateModalContent: {
-        width: '100%',
-        borderRadius: 16,
-        padding: 24,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.2,
-        shadowRadius: 24,
-        elevation: 10,
-    },
-    dateModalTitle: {
-        fontSize: 17,
-        fontWeight: '700',
-        marginBottom: 4,
-    },
-    dateModalSubtitle: {
-        fontSize: 13,
-        marginBottom: 20,
-    },
-    dateInputRow: {
-        flexDirection: 'row',
-        alignItems: 'flex-end',
-        marginBottom: 24,
-    },
-    dateInputWrapper: {
-        flex: 1,
-    },
-    dateInputLabel: {
-        fontSize: 11,
-        fontWeight: '600',
-        marginBottom: 6,
-        textAlign: 'center',
-    },
-    dateInput: {
-        borderWidth: 1,
-        borderRadius: 10,
-        paddingHorizontal: 8,
-        paddingVertical: 12,
-        fontSize: 18,
-        fontWeight: '600',
-    },
-    dateSeparator: {
-        fontSize: 22,
-        fontWeight: '300',
-        marginHorizontal: 6,
-        paddingBottom: 10,
-    },
-    dateModalActions: {
-        flexDirection: 'row',
-        gap: 10,
-    },
-    dateModalButton: {
-        flex: 1,
-        paddingVertical: 12,
-        borderRadius: 10,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    dateModalClearButton: {
-        borderWidth: 1,
-    },
-    dateModalClearText: {
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    dateModalCancelButton: {
-        borderWidth: 1,
-    },
-    dateModalCancelText: {
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    dateModalConfirmButton: {
-        backgroundColor: ACCENT,
-    },
-    dateModalConfirmText: {
-        color: '#fff',
-        fontSize: 14,
-        fontWeight: '700',
-    },
-
-    // ─── Fullscreen Photo Modal ───────────────────────────────
-    fullscreenOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.95)',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    fullscreenClose: {
-        position: 'absolute',
-        top: 50,
-        right: 20,
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 10,
-    },
-    fullscreenCloseText: {
-        color: '#fff',
-        fontSize: 20,
-        fontWeight: '600',
-    },
-    fullscreenImage: {
-        width: SCREEN_WIDTH - 32,
-        height: SCREEN_WIDTH - 32,
-        borderRadius: 8,
-    },
+    // Fullscreen photo
+    fsOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', alignItems: 'center', justifyContent: 'center' },
+    fsClose: { position: 'absolute', top: 50, right: 20, width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center', zIndex: 10 },
+    fsCloseText: { color: '#fff', fontSize: 18, fontWeight: '600' },
+    fsImage: { width: SCREEN_WIDTH - 32, height: SCREEN_WIDTH - 32, borderRadius: 8 },
 });

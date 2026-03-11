@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Alert, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { addDays, format, parse, isValid } from 'date-fns';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import uuid from 'react-native-uuid';
 import { useTheme } from '../context/ThemeContext';
 import { saveTNA } from '../utils/storageService';
@@ -51,21 +52,14 @@ const TNACreateScreen = ({ navigation }) => {
     const [shipmentDate, setShipmentDate] = useState(null);
     const [milestones, setMilestones] = useState([]);
 
-    // Date picker modal
-    const [showDatePicker, setShowDatePicker] = useState(false);
-    const [dateDay, setDateDay] = useState('');
-    const [dateMonth, setDateMonth] = useState('');
-    const [dateYear, setDateYear] = useState('');
+    // Calendar picker state
+    const [calendarVisible, setCalendarVisible] = useState(false);
+    const [calendarDate, setCalendarDate] = useState(new Date());
+    const [calendarTarget, setCalendarTarget] = useState(null); // 'shipment' | 'milestone' | 'newMilestone'
 
     // Milestone editing
     const [editingMilestoneId, setEditingMilestoneId] = useState(null);
     const [editingField, setEditingField] = useState(null); // 'date' or 'owner'
-
-    // Milestone date edit modal
-    const [showMilestoneDatePicker, setShowMilestoneDatePicker] = useState(false);
-    const [milestoneDateDay, setMilestoneDateDay] = useState('');
-    const [milestoneDateMonth, setMilestoneDateMonth] = useState('');
-    const [milestoneDateYear, setMilestoneDateYear] = useState('');
 
     // Owner picker modal
     const [showOwnerPicker, setShowOwnerPicker] = useState(false);
@@ -73,9 +67,7 @@ const TNACreateScreen = ({ navigation }) => {
     // Add custom milestone modal
     const [showAddMilestone, setShowAddMilestone] = useState(false);
     const [newMilestoneName, setNewMilestoneName] = useState('');
-    const [newMilestoneDay, setNewMilestoneDay] = useState('');
-    const [newMilestoneMonth, setNewMilestoneMonth] = useState('');
-    const [newMilestoneYear, setNewMilestoneYear] = useState('');
+    const [newMilestoneDate, setNewMilestoneDate] = useState(null);
     const [newMilestoneOwner, setNewMilestoneOwner] = useState('merchandiser');
 
     const [saving, setSaving] = useState(false);
@@ -91,56 +83,44 @@ const TNACreateScreen = ({ navigation }) => {
         }));
     };
 
-    // Handle shipment date confirmation
-    const handleConfirmDate = () => {
-        const day = parseInt(dateDay, 10);
-        const month = parseInt(dateMonth, 10);
-        const year = parseInt(dateYear, 10);
-
-        if (!day || !month || !year || day < 1 || day > 31 || month < 1 || month > 12 || year < 2020) {
-            Alert.alert('Invalid Date', 'Please enter a valid date (DD / MM / YYYY).');
-            return;
-        }
-
-        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const parsed = parse(dateStr, 'yyyy-MM-dd', new Date());
-
-        if (!isValid(parsed)) {
-            Alert.alert('Invalid Date', 'The date you entered is not valid.');
-            return;
-        }
-
-        setShipmentDate(parsed);
-        setMilestones(generateMilestones(parsed));
-        setShowDatePicker(false);
+    // Open the calendar picker
+    const openCalendar = (target, existingDate) => {
+        setCalendarTarget(target);
+        setCalendarDate(existingDate || new Date());
+        setCalendarVisible(true);
     };
 
-    // Handle milestone date edit confirmation
-    const handleConfirmMilestoneDate = () => {
-        const day = parseInt(milestoneDateDay, 10);
-        const month = parseInt(milestoneDateMonth, 10);
-        const year = parseInt(milestoneDateYear, 10);
-
-        if (!day || !month || !year || day < 1 || day > 31 || month < 1 || month > 12 || year < 2020) {
-            Alert.alert('Invalid Date', 'Please enter a valid date (DD / MM / YYYY).');
-            return;
+    // Handle calendar date change
+    const onCalendarChange = (event, selectedDate) => {
+        if (Platform.OS === 'android') setCalendarVisible(false);
+        if (event.type === 'dismissed') return;
+        if (selectedDate) {
+            setCalendarDate(selectedDate);
+            if (Platform.OS === 'android') {
+                applyCalendarDate(selectedDate);
+            }
         }
+    };
 
-        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const parsed = parse(dateStr, 'yyyy-MM-dd', new Date());
+    // Confirm iOS calendar selection
+    const confirmIOSCalendar = () => {
+        applyCalendarDate(calendarDate);
+        setCalendarVisible(false);
+    };
 
-        if (!isValid(parsed)) {
-            Alert.alert('Invalid Date', 'The date you entered is not valid.');
-            return;
+    // Apply selected date based on target
+    const applyCalendarDate = (date) => {
+        if (calendarTarget === 'shipment') {
+            setShipmentDate(date);
+            setMilestones(generateMilestones(date));
+        } else if (calendarTarget === 'milestone') {
+            setMilestones(prev => prev.map(m =>
+                m.id === editingMilestoneId ? { ...m, dueDate: format(date, 'yyyy-MM-dd') } : m
+            ));
+            setEditingMilestoneId(null);
+        } else if (calendarTarget === 'newMilestone') {
+            setNewMilestoneDate(date);
         }
-
-        setMilestones((prev) =>
-            prev.map((m) =>
-                m.id === editingMilestoneId ? { ...m, dueDate: format(parsed, 'yyyy-MM-dd') } : m
-            )
-        );
-        setShowMilestoneDatePicker(false);
-        setEditingMilestoneId(null);
     };
 
     // Handle owner change
@@ -156,12 +136,9 @@ const TNACreateScreen = ({ navigation }) => {
 
     // Open milestone date editor
     const openMilestoneDateEditor = (milestone) => {
-        const parsed = parse(milestone.dueDate, 'yyyy-MM-dd', new Date());
-        setMilestoneDateDay(String(parsed.getDate()));
-        setMilestoneDateMonth(String(parsed.getMonth() + 1));
-        setMilestoneDateYear(String(parsed.getFullYear()));
         setEditingMilestoneId(milestone.id);
-        setShowMilestoneDatePicker(true);
+        const parsed = parse(milestone.dueDate, 'yyyy-MM-dd', new Date());
+        openCalendar('milestone', isValid(parsed) ? parsed : new Date());
     };
 
     // Open owner picker
@@ -188,58 +165,32 @@ const TNACreateScreen = ({ navigation }) => {
             Alert.alert('Missing Name', 'Please enter a milestone name.');
             return;
         }
-
-        const day = parseInt(newMilestoneDay, 10);
-        const month = parseInt(newMilestoneMonth, 10);
-        const year = parseInt(newMilestoneYear, 10);
-
-        if (!day || !month || !year || day < 1 || day > 31 || month < 1 || month > 12 || year < 2020) {
-            Alert.alert('Invalid Date', 'Please enter a valid date (DD / MM / YYYY).');
+        if (!newMilestoneDate) {
+            Alert.alert('Missing Date', 'Please select a due date.');
             return;
         }
-
-        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const parsed = parse(dateStr, 'yyyy-MM-dd', new Date());
-
-        if (!isValid(parsed)) {
-            Alert.alert('Invalid Date', 'The date you entered is not valid.');
-            return;
-        }
-
         const newMilestone = {
             id: uuid.v4(),
             name: newMilestoneName.trim(),
-            dueDate: format(parsed, 'yyyy-MM-dd'),
+            dueDate: format(newMilestoneDate, 'yyyy-MM-dd'),
             owner: newMilestoneOwner,
             completedAt: null,
         };
-
-        setMilestones((prev) => {
+        setMilestones(prev => {
             const updated = [...prev, newMilestone];
             updated.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
             return updated;
         });
-
         setNewMilestoneName('');
-        setNewMilestoneDay('');
-        setNewMilestoneMonth('');
-        setNewMilestoneYear('');
+        setNewMilestoneDate(null);
         setNewMilestoneOwner('merchandiser');
         setShowAddMilestone(false);
     };
 
     // Open add milestone modal with pre-filled date if shipment date exists
     const openAddMilestoneModal = () => {
-        if (shipmentDate) {
-            setNewMilestoneDay(String(shipmentDate.getDate()));
-            setNewMilestoneMonth(String(shipmentDate.getMonth() + 1));
-            setNewMilestoneYear(String(shipmentDate.getFullYear()));
-        } else {
-            setNewMilestoneDay('');
-            setNewMilestoneMonth('');
-            setNewMilestoneYear('');
-        }
         setNewMilestoneName('');
+        setNewMilestoneDate(shipmentDate || null);
         setNewMilestoneOwner('merchandiser');
         setShowAddMilestone(true);
     };
@@ -305,79 +256,6 @@ const TNACreateScreen = ({ navigation }) => {
         return format(parsed, 'dd MMM yyyy');
     };
 
-    // Render date picker modal
-    const renderDatePickerModal = (
-        visible,
-        onClose,
-        onConfirm,
-        dayVal,
-        setDayVal,
-        monthVal,
-        setMonthVal,
-        yearVal,
-        setYearVal,
-        title
-    ) => (
-        <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-            <View style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}>
-                <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-                    <Text style={[styles.modalTitle, { color: colors.text }]}>{title}</Text>
-                    <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
-                        Enter date as DD / MM / YYYY
-                    </Text>
-                    <View style={styles.dateInputRow}>
-                        <View style={styles.dateInputGroup}>
-                            <Text style={[styles.dateInputLabel, { color: colors.textSecondary }]}>Day</Text>
-                            <TextInput
-                                style={[styles.dateInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                                keyboardType="number-pad"
-                                maxLength={2}
-                                value={dayVal}
-                                onChangeText={setDayVal}
-                                placeholder="DD"
-                                placeholderTextColor={colors.textSecondary}
-                            />
-                        </View>
-                        <Text style={[styles.dateSeparator, { color: colors.textSecondary }]}>/</Text>
-                        <View style={styles.dateInputGroup}>
-                            <Text style={[styles.dateInputLabel, { color: colors.textSecondary }]}>Month</Text>
-                            <TextInput
-                                style={[styles.dateInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                                keyboardType="number-pad"
-                                maxLength={2}
-                                value={monthVal}
-                                onChangeText={setMonthVal}
-                                placeholder="MM"
-                                placeholderTextColor={colors.textSecondary}
-                            />
-                        </View>
-                        <Text style={[styles.dateSeparator, { color: colors.textSecondary }]}>/</Text>
-                        <View style={styles.dateInputGroup}>
-                            <Text style={[styles.dateInputLabel, { color: colors.textSecondary }]}>Year</Text>
-                            <TextInput
-                                style={[styles.dateInput, styles.dateInputYear, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                                keyboardType="number-pad"
-                                maxLength={4}
-                                value={yearVal}
-                                onChangeText={setYearVal}
-                                placeholder="YYYY"
-                                placeholderTextColor={colors.textSecondary}
-                            />
-                        </View>
-                    </View>
-                    <View style={styles.modalActions}>
-                        <TouchableOpacity style={[styles.modalCancelBtn, { borderColor: colors.border }]} onPress={onClose}>
-                            <Text style={[styles.modalCancelText, { color: colors.textSecondary }]}>Cancel</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.modalConfirmBtn} onPress={onConfirm}>
-                            <Text style={styles.modalConfirmText}>Confirm</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </View>
-        </Modal>
-    );
-
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -429,18 +307,7 @@ const TNACreateScreen = ({ navigation }) => {
                             <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Shipment Date *</Text>
                             <TouchableOpacity
                                 style={[styles.dateButton, { backgroundColor: colors.background, borderColor: colors.border }]}
-                                onPress={() => {
-                                    if (shipmentDate) {
-                                        setDateDay(String(shipmentDate.getDate()));
-                                        setDateMonth(String(shipmentDate.getMonth() + 1));
-                                        setDateYear(String(shipmentDate.getFullYear()));
-                                    } else {
-                                        setDateDay('');
-                                        setDateMonth('');
-                                        setDateYear('');
-                                    }
-                                    setShowDatePicker(true);
-                                }}
+                                onPress={() => openCalendar('shipment', shipmentDate)}
                             >
                                 <Text style={styles.dateButtonIcon}>📅</Text>
                                 <Text style={[styles.dateButtonText, { color: shipmentDate ? colors.text : colors.textSecondary }]}>
@@ -551,34 +418,6 @@ const TNACreateScreen = ({ navigation }) => {
                 <View style={{ height: 40 }} />
             </ScrollView>
 
-            {/* Shipment Date Picker Modal */}
-            {renderDatePickerModal(
-                showDatePicker,
-                () => setShowDatePicker(false),
-                handleConfirmDate,
-                dateDay,
-                setDateDay,
-                dateMonth,
-                setDateMonth,
-                dateYear,
-                setDateYear,
-                'Select Shipment Date'
-            )}
-
-            {/* Milestone Date Edit Modal */}
-            {renderDatePickerModal(
-                showMilestoneDatePicker,
-                () => { setShowMilestoneDatePicker(false); setEditingMilestoneId(null); },
-                handleConfirmMilestoneDate,
-                milestoneDateDay,
-                setMilestoneDateDay,
-                milestoneDateMonth,
-                setMilestoneDateMonth,
-                milestoneDateYear,
-                setMilestoneDateYear,
-                'Edit Milestone Date'
-            )}
-
             {/* Owner Picker Modal */}
             <Modal visible={showOwnerPicker} transparent animationType="fade" onRequestClose={() => { setShowOwnerPicker(false); setEditingMilestoneId(null); }}>
                 <View style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}>
@@ -630,46 +469,15 @@ const TNACreateScreen = ({ navigation }) => {
                             />
                         </View>
                         <Text style={[styles.inputLabel, { color: colors.textSecondary, marginBottom: 8 }]}>Due Date *</Text>
-                        <View style={styles.dateInputRow}>
-                            <View style={styles.dateInputGroup}>
-                                <Text style={[styles.dateInputLabel, { color: colors.textSecondary }]}>Day</Text>
-                                <TextInput
-                                    style={[styles.dateInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                                    keyboardType="number-pad"
-                                    maxLength={2}
-                                    value={newMilestoneDay}
-                                    onChangeText={setNewMilestoneDay}
-                                    placeholder="DD"
-                                    placeholderTextColor={colors.textSecondary}
-                                />
-                            </View>
-                            <Text style={[styles.dateSeparator, { color: colors.textSecondary }]}>/</Text>
-                            <View style={styles.dateInputGroup}>
-                                <Text style={[styles.dateInputLabel, { color: colors.textSecondary }]}>Month</Text>
-                                <TextInput
-                                    style={[styles.dateInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                                    keyboardType="number-pad"
-                                    maxLength={2}
-                                    value={newMilestoneMonth}
-                                    onChangeText={setNewMilestoneMonth}
-                                    placeholder="MM"
-                                    placeholderTextColor={colors.textSecondary}
-                                />
-                            </View>
-                            <Text style={[styles.dateSeparator, { color: colors.textSecondary }]}>/</Text>
-                            <View style={styles.dateInputGroup}>
-                                <Text style={[styles.dateInputLabel, { color: colors.textSecondary }]}>Year</Text>
-                                <TextInput
-                                    style={[styles.dateInput, styles.dateInputYear, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                                    keyboardType="number-pad"
-                                    maxLength={4}
-                                    value={newMilestoneYear}
-                                    onChangeText={setNewMilestoneYear}
-                                    placeholder="YYYY"
-                                    placeholderTextColor={colors.textSecondary}
-                                />
-                            </View>
-                        </View>
+                        <TouchableOpacity
+                            style={[styles.dateButton, { backgroundColor: colors.background, borderColor: colors.border }]}
+                            onPress={() => openCalendar('newMilestone', newMilestoneDate || shipmentDate || new Date())}
+                        >
+                            <Text style={styles.dateButtonIcon}>📅</Text>
+                            <Text style={[styles.dateButtonText, { color: newMilestoneDate ? colors.text : colors.textSecondary }]}>
+                                {newMilestoneDate ? format(newMilestoneDate, 'dd MMM yyyy') : 'Tap to select date'}
+                            </Text>
+                        </TouchableOpacity>
                         <Text style={[styles.inputLabel, { color: colors.textSecondary, marginTop: 16, marginBottom: 8 }]}>Owner</Text>
                         <View style={styles.ownerOptionsRow}>
                             {OWNER_OPTIONS.map((owner) => (
@@ -718,6 +526,31 @@ const TNACreateScreen = ({ navigation }) => {
                     </View>
                 </View>
             </Modal>
+
+            {/* Calendar Picker - Android */}
+            {calendarVisible && Platform.OS === 'android' && (
+                <DateTimePicker value={calendarDate} mode="date" display="calendar" onChange={onCalendarChange} />
+            )}
+
+            {/* Calendar Picker - iOS */}
+            {calendarVisible && Platform.OS === 'ios' && (
+                <Modal transparent animationType="fade" onRequestClose={() => setCalendarVisible(false)}>
+                    <View style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}>
+                        <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+                            <Text style={[styles.modalTitle, { color: colors.text }]}>Select Date</Text>
+                            <DateTimePicker value={calendarDate} mode="date" display="spinner" onChange={onCalendarChange} style={{ height: 180 }} />
+                            <View style={styles.modalActions}>
+                                <TouchableOpacity style={[styles.modalCancelBtn, { borderColor: colors.border }]} onPress={() => setCalendarVisible(false)}>
+                                    <Text style={[styles.modalCancelText, { color: colors.textSecondary }]}>Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.modalConfirmBtn} onPress={confirmIOSCalendar}>
+                                    <Text style={styles.modalConfirmText}>Confirm</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+                </Modal>
+            )}
         </View>
     );
 };
